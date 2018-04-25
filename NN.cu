@@ -60,7 +60,7 @@ InitGPUMemConvPart1(float *ConvLayer_1_1_Neurons_GPU, float *ConvLayer_1_1_Weigh
 {
 
 
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART1*IMAGE_INPUT_PART1*INPUT_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART1*IMAGE_INPUT_PART1*NUM));
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_1_Weights_GPU, sizeof(float)*CONVLAYER_1_1_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART1*IMAGE_INPUT_PART1*PART1_CHANNELS*NUM));
