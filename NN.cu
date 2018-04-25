@@ -4,7 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include <time.h>
-
+#include <NN.h>
 // includes, project
 #include <cutil.h>
 
@@ -54,21 +54,104 @@ main(int argc, char** argv)
     //CUT_EXIT(argc, argv);
 }
 
+
+
+InitGPUMemConvPart1(float *ConvLayer_1_1_Neurons_GPU, float *ConvLayer_1_1_Weights_GPU,float *ConvLayer_1_2_Neurons_GPU,float *ConvLayer_1_2_Weights_GPU)
+{
+
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART1*IMAGE_INPUT_PART1*INPUT_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_1_Weights_GPU, sizeof(float)*156));
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART1*IMAGE_INPUT_PART1*PART1_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_2_Weights_GPU, sizeof(float)*7800));
+}
+
+InitGPUMemConvPart2(float *ConvLayer_2_1_Neurons_GPU, float *ConvLayer_2_1_Weights_GPU,float *ConvLayer_2_2_Neurons_GPU,float *ConvLayer_2_2_Weights_GPU);
+{
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_2_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART2*IMAGE_INPUT_PART2*PART2_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_2_1_Weights_GPU, sizeof(float)*156));
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_2_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART2*IMAGE_INPUT_PART2*PART2_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_2_2_Weights_GPU, sizeof(float)*7800));
+}
+
+InitGPUMemConvPart3(float *ConvLayer_3_1_Neurons_GPU, float *ConvLayer_3_1_Weights_GPU,float *ConvLayer_3_2_Neurons_GPU,float *ConvLayer_3_2_Weights_GPU,float *ConvLayer_3_3_Neurons_GPU,float *ConvLayer_3_3_Weights_GPU);
+{
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART3*IMAGE_INPUT_PART3*PART3_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_1_Weights_GPU, sizeof(float)*156));
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART3*IMAGE_INPUT_PART3*PART3_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_2_Weights_GPU, sizeof(float)*7800));
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_3_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART3*IMAGE_INPUT_PART3*PART3_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_3_Weights_GPU, sizeof(float)*7800));
+}
+
+InitGPUMemConvPart4(float *ConvLayer_4_1_Neurons_GPU, float *ConvLayer_4_1_Weights_GPU,float *ConvLayer_4_2_Neurons_GPU,float *ConvLayer_4_2_Weights_GPU,float *ConvLayer_4_3_Neurons_GPU,float *ConvLayer_4_3_Weights_GPU);
+{
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART4*IMAGE_INPUT_PART4*PART4_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_1_Weights_GPU, sizeof(float)*156));
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART4*IMAGE_INPUT_PART4*PART4_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_2_Weights_GPU, sizeof(float)*7800));
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_3_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART4*IMAGE_INPUT_PART4*PART4_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_3_Weights_GPU, sizeof(float)*7800));
+}
+
+
+InitGPUMemConvPart5(float *ConvLayer_5_1_Neurons_GPU, float *ConvLayer_5_1_Weights_GPU,float *ConvLayer_5_2_Neurons_GPU,float *ConvLayer_5_2_Weights_GPU,float *ConvLayer_5_3_Neurons_GPU,float *ConvLayer_5_3_Weights_GPU);
+{
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*PART5_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_1_Weights_GPU, sizeof(float)*156));
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*PART5_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_2_Weights_GPU, sizeof(float)*7800));
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_3_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*PART5_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_3_Weights_GPU, sizeof(float)*7800));
+}
+InitGPUMemFC(float *FCLayer_1_Neurons_GPU, float *FCLayer_1_Weights_GPU,float *FCLayer_2_Neurons_GPU, float *FCLayer_2_Weights_GPU,float *FCLayer_3_Neurons_GPU, float *FCLayer_3_Weights_GPU);
+{
+	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*FC_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_1_Weights_GPU, sizeof(float)*156));
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*FC_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_2_Weights_GPU, sizeof(float)*156));
+
+	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_3_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*FC_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_3_Weights_GPU, sizeof(float)*156));
+}
+InitGPUMemSFM(float *SFMLayer_1_Neurons_GPU,float *SFMLayer_1_Weights_GPU);
+{
+	CUDA_SAFE_CALL(cudaMalloc((void**) &SFMLayer_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*PART5_CHANNELS*NUM));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &SFMLayer_1_Weights_GPU, sizeof(float)*156));
+}
 void InitGPUMem(float *Layer1_Neurons_GPU,float *Layer1_Weights_GPU,float *Layer2_Neurons_GPU,float *Layer2_Weights_GPU,float *Layer3_Neurons_GPU,float *Layer3_Weights_GPU,float *Layer4_Neurons_GPU,float *Layer4_Weights_GPU,float *Layer5_Neurons_GPU)
 {
-	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer1_Neurons_GPU, sizeof(float)*29*29*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer1_Weights_GPU, sizeof(float)*156));
-	
-	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer2_Neurons_GPU, sizeof(float)*13*13*6*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer2_Weights_GPU, sizeof(float)*7800));
 
-	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer3_Neurons_GPU, sizeof(float)*1250*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer3_Weights_GPU, sizeof(float)*125100));
+	InitGPUMemConvPart1();
+	InitGPUMemConvPart2();
+	InitGPUMemConvPart3();
+	InitGPUMemConvPart4();
+	InitGPUMemConvPart5();
+	InitGPUMemFC();
+	InitGPUMemSFM();
 
-	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer4_Neurons_GPU, sizeof(float)*100*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer4_Weights_GPU, sizeof(float)*1010));
-
-	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer5_Neurons_GPU, sizeof(float)*10*NUM));
+	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer1_Neurons_GPU, sizeof(float)*29*29*NUM));
+	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer1_Weights_GPU, sizeof(float)*156));
+	//
+	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer2_Neurons_GPU, sizeof(float)*13*13*6*NUM));
+	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer2_Weights_GPU, sizeof(float)*7800));
+	//
+	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer3_Neurons_GPU, sizeof(float)*1250*NUM));
+	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer3_Weights_GPU, sizeof(float)*125100));
+	//
+	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer4_Neurons_GPU, sizeof(float)*100*NUM));
+	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer4_Weights_GPU, sizeof(float)*1010));
+	//
+	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer5_Neurons_GPU, sizeof(float)*10*NUM));
 }
 void InitHostMem(float *Layer1_Weights_CPU,float *Layer2_Weights_CPU,float *Layer3_Weights_CPU,float *Layer4_Weights_CPU)
 {
@@ -146,7 +229,7 @@ void readIn(float *layer1)
 		fread(foo,sizeof(int),1,fp);
         printf("number of rows = %d\n", swapEndianInt(foo[0]));
 		for (j=0;j<NUM;j++) {
-			for (i=0;i<28;i++) 
+			for (i=0;i<28;i++)
 				fread((image+i*29+j*29*29),sizeof(char),28,fp);
 		}
 		//fread(layer1,sizeof(float),29*29,fp);
@@ -155,7 +238,7 @@ void readIn(float *layer1)
 			layer1[i] = (1.0 - (float) image[i]/256);
 	}
 	else
-	{	
+	{
 		printf("FAIL! data/t10k-images-idx3-ubyte NOT FOUND!\n");
 		exit(1);
 	}
@@ -168,7 +251,7 @@ void output(double *final)
 	fp=fopen("out.res","wb");
 	if(fp)
 	{
-		//for(i=0;i<10;i++) { 
+		//for(i=0;i<10;i++) {
 		//	printf("output[%d] = %e\n", i, final[i]);
 		//}
 		fwrite(final,sizeof(double),10,fp);
@@ -177,28 +260,28 @@ void output(double *final)
 }
 
 void NeuralNetwork()
-{	
+{
 	int x,y;
 	// initialise card and timer
-	int deviceCount;                                                         
-	CUDA_SAFE_CALL_NO_SYNC(cudaGetDeviceCount(&deviceCount));                
-	if (deviceCount == 0) {                                                  
-		fprintf(stderr, "There is no device.\n");                            
-		exit(EXIT_FAILURE);                                                  
-	}                                                                        
-	int dev;                                                                 
-	for (dev = 0; dev < deviceCount; ++dev) {                                
-		cudaDeviceProp deviceProp;                                           
-		CUDA_SAFE_CALL_NO_SYNC(cudaGetDeviceProperties(&deviceProp, dev));   
-		if (deviceProp.major >= 1)                                           
-			break;                                                           
-	}                                                                        
-	if (dev == deviceCount) {                                                
-		fprintf(stderr, "There is no device supporting CUDA.\n");            
-		exit(EXIT_FAILURE);                                                  
-	}                                                                        
-	else                                                                     
-		CUDA_SAFE_CALL(cudaSetDevice(dev));  
+	int deviceCount;
+	CUDA_SAFE_CALL_NO_SYNC(cudaGetDeviceCount(&deviceCount));
+	if (deviceCount == 0) {
+		fprintf(stderr, "There is no device.\n");
+		exit(EXIT_FAILURE);
+	}
+	int dev;
+	for (dev = 0; dev < deviceCount; ++dev) {
+		cudaDeviceProp deviceProp;
+		CUDA_SAFE_CALL_NO_SYNC(cudaGetDeviceProperties(&deviceProp, dev));
+		if (deviceProp.major >= 1)
+			break;
+	}
+	if (dev == deviceCount) {
+		fprintf(stderr, "There is no device supporting CUDA.\n");
+		exit(EXIT_FAILURE);
+	}
+	else
+		CUDA_SAFE_CALL(cudaSetDevice(dev));
 	//float Layer1_Neurons_CPU[29*29*NUM];
 	float *Layer1_Neurons_CPU = (float*) malloc (29*29*NUM * sizeof(float));
 	 /*={
@@ -244,7 +327,7 @@ void NeuralNetwork()
 				//printf("%d", (Layer1_Neurons_CPU[y*29+x]>0.5));
 			}
 			printf("\n");
-			
+
 		}
 	}
 	float *Layer1_Neurons_GPU;
@@ -279,7 +362,7 @@ void NeuralNetwork()
 	//InitGPUMem(Layer1_Neurons_GPU,Layer1_Weights_GPU,Layer2_Neurons_GPU,Layer2_Weights_GPU,Layer3_Neurons_GPU,Layer3_Weights_GPU,Layer4_Neurons_GPU,Layer4_Weights_GPU,Layer5_Neurons_GPU);
 	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer1_Neurons_GPU, sizeof(float)*29*29*NUM));
 	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer1_Weights_GPU, sizeof(float)*156));
-	
+
 	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer2_Neurons_GPU, sizeof(float)*13*13*6*NUM));
 	CUDA_SAFE_CALL(cudaMalloc((void**) &Layer2_Weights_GPU, sizeof(float)*7800));
 
@@ -329,7 +412,7 @@ void NeuralNetwork()
 
 	//copy from GPU to CPU
     CUDA_SAFE_CALL(cudaMemcpy(Layer5_Neurons_CPU,Layer5_Neurons_GPU, sizeof(float)*10*NUM, cudaMemcpyDeviceToHost));
-    
+
     // stop and destroy timer
 
     //printf("Processing time: %f (ms) \n", totaltime);
@@ -347,7 +430,7 @@ void NeuralNetwork()
 		if (outputLayer[a]>x) {
 			x=outputLayer[a];
 			y=a%10;
-		}	
+		}
 	}
 	printf("%d\n", y);
 	output(outputLayer);
@@ -380,4 +463,3 @@ void NeuralNetwork()
 
 	exit(0);
 }
-
