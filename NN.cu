@@ -138,20 +138,6 @@ void InitGPUMem(float *Layer1_Neurons_GPU,float *Layer1_Weights_GPU,float *Layer
 	InitGPUMemConvPart5();
 	InitGPUMemFC();
 	InitGPUMemSFM();
-
-	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer1_Neurons_GPU, sizeof(float)*29*29*NUM));
-	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer1_Weights_GPU, sizeof(float)*156));
-	//
-	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer2_Neurons_GPU, sizeof(float)*13*13*6*NUM));
-	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer2_Weights_GPU, sizeof(float)*7800));
-	//
-	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer3_Neurons_GPU, sizeof(float)*1250*NUM));
-	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer3_Weights_GPU, sizeof(float)*125100));
-	//
-	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer4_Neurons_GPU, sizeof(float)*100*NUM));
-	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer4_Weights_GPU, sizeof(float)*1010));
-	//
-	// CUDA_SAFE_CALL(cudaMalloc((void**) &Layer5_Neurons_GPU, sizeof(float)*10*NUM));
 }
 void InitHostMem(float *Layer1_Weights_CPU,float *Layer2_Weights_CPU,float *Layer3_Weights_CPU,float *Layer4_Weights_CPU)
 {
