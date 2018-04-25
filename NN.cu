@@ -180,6 +180,176 @@ void InitHostMem(float *Layer1_Weights_CPU,float *Layer2_Weights_CPU,float *Laye
 	}
 }
 
+void InitHostMemPart1(float *ConvLayer_1_1_Weights_CPU,float *ConvLayer_1_2_Weights_CPU)
+{
+	// init layer 1_1 weight
+	FILE * pFile1 = fopen ("data/conv1_1_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*INPUT_CHANNELS*PART1_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+	// init layer 1_2 weight
+	FILE * pFile1 = fopen ("data/conv1_2_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART1_CHANNELS*PART1_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+}
+
+void InitHostMemPart2(float *ConvLayer_2_1_Weights_CPU,float *ConvLayer_2_2_Weights_CPU)
+{
+	// init layer 1_1 weight
+	FILE * pFile1 = fopen ("data/conv2_1_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART1_CHANNELS*PART2_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+	// init layer 1_2 weight
+	FILE * pFile1 = fopen ("data/conv2_2_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART2_CHANNELS*PART2_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+}
+
+void InitHostMemPart3(float *ConvLayer_3_1_Weights_CPU,float *ConvLayer_3_2_Weights_CPU,float *ConvLayer_3_3_Weights_CPU)
+{
+
+	FILE * pFile1 = fopen ("data/conv3_1_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART2_CHANNELS*PART3_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+	// init layer 1_2 weight
+	FILE * pFile1 = fopen ("data/conv3_2_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART3_CHANNELS*PART3_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+	FILE * pFile1 = fopen ("data/conv3_3_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART3_CHANNELS*PART3_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+}
+
+void InitHostMemPart4(float *ConvLayer_4_1_Weights_CPU,float *ConvLayer_4_2_Weights_CPU,float *ConvLayer_4_3_Weights_CPU)
+{
+	FILE * pFile1 = fopen ("data/conv4_1_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART3_CHANNELS*PART4_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+	// init layer 1_2 weight
+	FILE * pFile1 = fopen ("data/conv3_2_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART4_CHANNELS*PART4_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+	FILE * pFile1 = fopen ("data/conv3_3_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART4_CHANNELS*PART4_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+}
+
+void InitHostMemPart5(float *ConvLayer_5_1_Weights_CPU,float *ConvLayer_5_2_Weights_CPU,float *ConvLayer_5_3_Weights_CPU)
+{
+
+	FILE * pFile1 = fopen ("data/conv5_1_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART4_CHANNELS*PART5_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+	// init layer 1_2 weight
+	FILE * pFile1 = fopen ("data/conv5_2_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART5_CHANNELS*PART5_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+
+	FILE * pFile1 = fopen ("data/conv5_3_v.txt","rb");
+	if (pFile1 != NULL)
+	{
+		for(int i=0;i<KERNEL_SIZE*PART5_CHANNELS*PART5_CHANNELS;++i){
+			fread(&(Layer1_Weights_CPU[i]),sizeof(float),1,pFile1);
+			//printf("Layer1_Weights_CPU[%d]=%f\n", i, Layer1_Weights_CPU[i]);
+		}
+		fclose (pFile1);
+	}
+}
+
+void InitHostMemPartFC(float *FCLayer_1_Weights_CPU,float *FCLayer_2_Weights_CPU)
+{
+
+
+}
+
+void InitHostMemPartSF(float * SFMLayer_1_Weights_CPU)
+{
+
+
+}
+
 int swapEndianInt( int bEnum )
 {
 
