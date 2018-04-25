@@ -61,72 +61,72 @@ InitGPUMemConvPart1(float *ConvLayer_1_1_Neurons_GPU, float *ConvLayer_1_1_Weigh
 
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART1*IMAGE_INPUT_PART1*INPUT_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_1_Weights_GPU, sizeof(float)*156));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_1_Weights_GPU, sizeof(float)*CONVLAYER_1_1_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART1*IMAGE_INPUT_PART1*PART1_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_2_Weights_GPU, sizeof(float)*7800));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_2_Weights_GPU, sizeof(float)*CONVLAYER_1_2_WEIGHTS));
 }
 
 InitGPUMemConvPart2(float *ConvLayer_2_1_Neurons_GPU, float *ConvLayer_2_1_Weights_GPU,float *ConvLayer_2_2_Neurons_GPU,float *ConvLayer_2_2_Weights_GPU);
 {
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_2_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART2*IMAGE_INPUT_PART2*PART2_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_2_1_Weights_GPU, sizeof(float)*156));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_2_1_Weights_GPU, sizeof(float)*CONVLAYER_2_1_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_2_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART2*IMAGE_INPUT_PART2*PART2_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_2_2_Weights_GPU, sizeof(float)*7800));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_2_2_Weights_GPU, sizeof(float)*CONVLAYER_2_2_WEIGHTS));
 }
 
 InitGPUMemConvPart3(float *ConvLayer_3_1_Neurons_GPU, float *ConvLayer_3_1_Weights_GPU,float *ConvLayer_3_2_Neurons_GPU,float *ConvLayer_3_2_Weights_GPU,float *ConvLayer_3_3_Neurons_GPU,float *ConvLayer_3_3_Weights_GPU);
 {
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART3*IMAGE_INPUT_PART3*PART3_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_1_Weights_GPU, sizeof(float)*156));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_1_Weights_GPU, sizeof(float)*CONVLAYER_3_1_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART3*IMAGE_INPUT_PART3*PART3_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_2_Weights_GPU, sizeof(float)*7800));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_2_Weights_GPU, sizeof(float)*CONVLAYER_3_2_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_3_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART3*IMAGE_INPUT_PART3*PART3_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_3_Weights_GPU, sizeof(float)*7800));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_3_3_Weights_GPU, sizeof(float)*CONVLAYER_3_3_WEIGHTS));
 }
 
 InitGPUMemConvPart4(float *ConvLayer_4_1_Neurons_GPU, float *ConvLayer_4_1_Weights_GPU,float *ConvLayer_4_2_Neurons_GPU,float *ConvLayer_4_2_Weights_GPU,float *ConvLayer_4_3_Neurons_GPU,float *ConvLayer_4_3_Weights_GPU);
 {
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART4*IMAGE_INPUT_PART4*PART4_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_1_Weights_GPU, sizeof(float)*156));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_1_Weights_GPU, sizeof(float)*CONVLAYER_4_1_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART4*IMAGE_INPUT_PART4*PART4_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_2_Weights_GPU, sizeof(float)*7800));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_2_Weights_GPU, sizeof(float)*CONVLAYER_4_2_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_3_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART4*IMAGE_INPUT_PART4*PART4_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_3_Weights_GPU, sizeof(float)*7800));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_4_3_Weights_GPU, sizeof(float)*CONVLAYER_4_3_WEIGHTS));
 }
 
 
 InitGPUMemConvPart5(float *ConvLayer_5_1_Neurons_GPU, float *ConvLayer_5_1_Weights_GPU,float *ConvLayer_5_2_Neurons_GPU,float *ConvLayer_5_2_Weights_GPU,float *ConvLayer_5_3_Neurons_GPU,float *ConvLayer_5_3_Weights_GPU);
 {
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*PART5_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_1_Weights_GPU, sizeof(float)*156));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_1_Weights_GPU, sizeof(float)*CONVLAYER_5_1_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*PART5_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_2_Weights_GPU, sizeof(float)*7800));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_2_Weights_GPU, sizeof(float)*CONVLAYER_5_2_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_3_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*PART5_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_3_Weights_GPU, sizeof(float)*7800));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_5_3_Weights_GPU, sizeof(float)*CONVLAYER_5_3_WEIGHTS));
 }
 InitGPUMemFC(float *FCLayer_1_Neurons_GPU, float *FCLayer_1_Weights_GPU,float *FCLayer_2_Neurons_GPU, float *FCLayer_2_Weights_GPU,float *FCLayer_3_Neurons_GPU, float *FCLayer_3_Weights_GPU);
 {
 	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*FC_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_1_Weights_GPU, sizeof(float)*156));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_1_Weights_GPU, sizeof(float)*FCLAYER_1_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*FC_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_2_Weights_GPU, sizeof(float)*156));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_2_Weights_GPU, sizeof(float)*FCLAYER_2_WEIGHTS));
 
 	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_3_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*FC_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_3_Weights_GPU, sizeof(float)*156));
+	CUDA_SAFE_CALL(cudaMalloc((void**) &FCLayer_3_Weights_GPU, sizeof(float)*FCLAYER_3_WEIGHTS));
 }
 InitGPUMemSFM(float *SFMLayer_1_Neurons_GPU,float *SFMLayer_1_Weights_GPU);
 {
 	CUDA_SAFE_CALL(cudaMalloc((void**) &SFMLayer_1_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART5*IMAGE_INPUT_PART5*PART5_CHANNELS*NUM));
-	CUDA_SAFE_CALL(cudaMalloc((void**) &SFMLayer_1_Weights_GPU, sizeof(float)*156));
+//	CUDA_SAFE_CALL(cudaMalloc((void**) &SFMLayer_1_Weights_GPU, sizeof(float)*CONVLAYER_4_1_WEIGHTS));
 }
 void InitGPUMem(float *Layer1_Neurons_GPU,float *Layer1_Weights_GPU,float *Layer2_Neurons_GPU,float *Layer2_Weights_GPU,float *Layer3_Neurons_GPU,float *Layer3_Weights_GPU,float *Layer4_Neurons_GPU,float *Layer4_Weights_GPU,float *Layer5_Neurons_GPU)
 {
