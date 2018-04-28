@@ -143,3 +143,54 @@ __global__ void executeFourthLayer(float *Layer4_Neurons_GPU,float *Layer4_Weigh
 }
 
 #endif // #ifndef _NN_KERNEL_H_
+
+---------------------------------jean-----------------------------
+int weights[13][4] = { 
+	{ 64, 3, CONV_SIZE, CONV_SIZE },
+	{ 64, 64, CONV_SIZE, CONV_SIZE },
+	{ 128, 64, CONV_SIZE, CONV_SIZE },
+	{ 128, 128, CONV_SIZE, CONV_SIZE },
+	{ 256, 128, CONV_SIZE, CONV_SIZE },
+	{ 256, 256, CONV_SIZE, CONV_SIZE },
+	{ 256, 256, CONV_SIZE, CONV_SIZE },
+	{ 512, 256, CONV_SIZE, CONV_SIZE },
+	{ 512, 512, CONV_SIZE, CONV_SIZE },
+	{ 512, 512, CONV_SIZE, CONV_SIZE },
+	{ 512, 512, CONV_SIZE, CONV_SIZE },
+	{ 512, 512, CONV_SIZE, CONV_SIZE },
+	{ 512, 512, CONV_SIZE, CONV_SIZE }
+};
+
+int layers[5][4]={
+	{PART_1,IMAGE_INPUT_PART1,IMAGE_INPUT_PART1,INPUT_CHANNELS},
+	{PART_2,IMAGE_INPUT_PART2,IMAGE_INPUT_PART2,PART2_CHANNELS},
+	{PART_3,IMAGE_INPUT_PART3,IMAGE_INPUT_PART3,PART3_CHANNELS},
+    {PART_4,IMAGE_INPUT_PART4,IMAGE_INPUT_PART4,PART4_CHANNELS},
+	{PART_5,IMAGE_INPUT_PART5,IMAGE_INPUT_PART5,PART5_CHANNELS},
+}
+
+__global__ void cnvolution3D(float *inputLayerNeurons, float *outputLayerNeurons,float *layerWeights, int part)
+{
+    float temp;
+    for(int channels=0;channels<layers[part+1][3]; channels++)
+	{
+		for(int sizeRow=0;sizeRow<layers[part+1][1]; sizeRow++)
+		{
+			for(int sizeCol=0;sizeCol<layers[part+1][2]; sizeCol++)
+			{
+				for(int k=0;k<layers[part][3]; k++)
+				{
+					for(int i=0;i<3;i++)
+					{
+						for(int i=0;i<3;i++)
+						{
+							//outputLayerNeurons[] += inputLayerNeurons[] * layerWeights[] ;
+							temp = += inputLayerNeurons[] * layerWeights[] ;
+						}
+					}
+				}
+			}
+		}
+	}
+    
+}
