@@ -69,8 +69,8 @@ InitGPUMemConvPart1(float *ConvLayer_1_1_Neurons_GPU, float *ConvLayer_1_1_Weigh
   // Memory copy  for Input and weights
 
   // Call execution of convolution1_1
-	dim3 grid(11,9,1);
-	dim3 block(32,16,1);
+	dim3 grid(10,5,1);
+	dim3 block(32,32,1);
                                 // Input                                    weights                           output
   convolution2D<<grid,block >>(float * ConvLayer_1_1_Neurons_GPU,float* ConvLayer_1_1_Weights_GPU,float* ConvLayer_1_2_Neurons_GPU)
 
