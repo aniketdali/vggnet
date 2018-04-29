@@ -66,6 +66,14 @@ InitGPUMemConvPart1(float *ConvLayer_1_1_Neurons_GPU, float *ConvLayer_1_1_Weigh
 	// OUTPUT																																								224      * 224                       * 64
 	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_2_Neurons_GPU, sizeof(float)*IMAGE_INPUT_PART1*IMAGE_INPUT_PART1*PART1_CHANNELS*NUM));
 
+  // Memory copy  for Input and weights
+
+  // Call execution of convolution1_1
+	dim3 grid(11,9,1);
+	dim3 block(32,16,1);
+                                // Input                                    weights                           output
+  convolution2D<<grid,block >>(float * ConvLayer_1_1_Neurons_GPU,float* ConvLayer_1_1_Weights_GPU,float* ConvLayer_1_2_Neurons_GPU)
+
 //	CUDA_SAFE_CALL(cudaMalloc((void**) &ConvLayer_1_2_Weights_GPU, sizeof(float)*CONVLAYER_1_2_WEIGHTS));
 }
 
