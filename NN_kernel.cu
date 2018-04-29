@@ -163,7 +163,7 @@ __global__ void cnvolution2D(float *inputLayerNeurons, float *outputLayerNeurons
      else
      {
        Ns[ty][tx] =0.0f;
-     }
+     } 
 
      if(ty <TITLE_WIDTH && tx <TITLE_WIDTH)
      {
