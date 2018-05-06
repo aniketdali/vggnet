@@ -49,7 +49,7 @@ InitGPUMemSFM(float *SFMLayer_1_Neurons_GPU,float *SFMLayer_1_Weights_GPU);
 #define FCLAYER_3_WEIGHTS (FC_CHANNELS*FC_CHANNELS)
 
 //---------------------------------jean-----------------------------
-int weights[13][4] = { 
+int layers[13][4] = { 
 	{ 64, 3, CONV_SIZE, CONV_SIZE },
 	{ 64, 64, CONV_SIZE, CONV_SIZE },
 	{ 128, 64, CONV_SIZE, CONV_SIZE },
