@@ -85,7 +85,7 @@ __global__ void convolution(float *I, const float* __restrict__ M, float *P,int 
    if (y < height && x < width)
       //P[(y * width + x) * channels + k] = clamp(accum);
       for(z =0;z<outputChannels;z++)
-          P[(y * width + x)+z] = accum[z];
+          P[(y * width*outputChannels + outputChannels*x)+z] = accum[z];
 
 //
 
@@ -245,7 +245,7 @@ int main()
            {
              for(int k=0; k<outputChannels; k++)
              {
-               outputImageOnHost[(i*imageWidth*outputChannels)+(j*2)+k]=convolution_2D_OnHost(hostInputImageData,hostMaskData,imageWidth,imageHeight,i,j,imageChannels,k);
+               outputImageOnHost[(i*imageWidth*outputChannels)+(j*outputChannels)+k]=convolution_2D_OnHost(hostInputImageData,hostMaskData,imageWidth,imageHeight,i,j,imageChannels,k);
 
              }
            }
