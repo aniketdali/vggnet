@@ -68,6 +68,7 @@ __global__ void convolution(float *I, const float* __restrict__ M, float *P,int 
       for(z =0;z<outputChannels;z++)
         for (y = 0; y < Mask_width; y++)
            for (x = 0; x < Mask_width; x++)
+              //                                                                                            navigation with input channel mask  inside mask navigate
               accum[z] += N_ds[threadIdx.y + y][threadIdx.x + x] * M[ ( z*Mask_width*Mask_width*channels + k*Mask_width*Mask_width) + y * Mask_width + x];
 
       __syncthreads();
@@ -90,7 +91,7 @@ __global__ void convolution(float *I, const float* __restrict__ M, float *P,int 
 
 }
 
-float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int j,int imageChannels);
+float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int j,int imageChannels ,int outputChannels);
 
 int main()
 {
@@ -162,8 +163,7 @@ int main()
         exit(EXIT_FAILURE);
     }
 	printf("Copy input data from the host memory to the CUDA device\n");
-    err = cudaMemcpy(deviceInputImageData,
-               hostInputImageData,
+    err = cudaMemcpy(deviceInputImageData, hostInputImageData,
                imageWidth * imageHeight * imageChannels * sizeof(float),
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
@@ -238,22 +238,27 @@ int main()
 #endif
 
     //Convolution on Host
+    int offset =0;
     for(int i=0;i<imageWidth;i++)
           {
            for(int j=0;j<imageHeight;j++)
            {
-               outputImageOnHost[(i*imageWidth)+j]=convolution_2D_OnHost(hostInputImageData,hostMaskData,imageWidth,imageHeight,i,j,imageChannels);
+             for(int k=0; k<outputChannels; k++)
+             {
+               outputImageOnHost[(i*imageWidth)+(j*2)+k]=convolution_2D_OnHost(hostInputImageData,hostMaskData,imageWidth,imageHeight,i,j,imageChannels,k);
+
+             }
            }
           }
 
     printf("\n Output from Host:\n");
-#if 1 //comment this to run the portion of code
-    for(int i=0;i<imageWidth*imageHeight;i++)
+#if 1
+    for(int i=0;i<(imageWidth*imageHeight*outputChannels);i++)
       {
-      if(i>0 && (i%imageWidth==0))
-       fprintf(hp,"\n");
-      //printf("%0.2f \t",*(outputImageOnHost+i));
-	  fprintf(hp, "%0.2f \t", *(outputImageOnHost+i));
+        if(i>0 && (i%imageWidth==0))
+         fprintf(hp,"\n");
+        //printf("%0.2f \t",*(outputImageOnHost+i));
+  	  fprintf(hp, "%0.2f \t", *(outputImageOnHost+i));
 
       }
 	  fclose(hp);
@@ -264,8 +269,8 @@ int main()
         {
          if(outputImageOnHost[i]!=hostOutputImageData[i])
          {
-           printf("\nMismatch at (Row,Col) = [%d][%d], hostComputed[]: %0.0f And device[]: %0.0f", i / imageWidth, i % imageHeight, outputImageOnHost[i], hostOutputImageData[i]);
-            }
+            printf("\nMismatch at (Row,Col) = [%d][%d], hostComputed[]: %0.0f And device[]: %0.0f", i / imageWidth, i % imageHeight, outputImageOnHost[i], hostOutputImageData[i]);
+         }
         }
 
     cudaFree(deviceInputImageData);
@@ -282,7 +287,7 @@ int main()
     return 0;
 }
 
-float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int j,int imageChannels)
+float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int j,int imageChannels, int outputChannels)
 {
  float Pvalue=0.0;
  int N_start_point_i = i  - (Mask_width/2);
@@ -290,18 +295,22 @@ float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int 
  for(int j = 0; j<imageChannels; j++)
  {
    // src = (srcY * width + srcX) * channels + k;
-   for(int k=0;k<Mask_width;k++)
-   {
-      for(int l=0;l<Mask_height;l++)
-      {
-         if(((N_start_point_i+k)>=0) && ((N_start_point_i+k)<width)&&((N_start_point_j+l)>=0)&&((N_start_point_j+l)<height))
-         {
-             Pvalue+=N[((N_start_point_i+k)*width+(N_start_point_j+l))*imageChannels + j] *M[(j*Mask_width*Mask_width) + (k*Mask_width)+l];
+
+       for(int k=0;k<Mask_width;k++)
+       {
+          for(int l=0;l<Mask_height;l++)
+          {
+             if(((N_start_point_i+k)>=0) && ((N_start_point_i+k)<width)&&((N_start_point_j+l)>=0)&&((N_start_point_j+l)<height))
+             {
+                 Pvalue +=N[((N_start_point_i+k)*width+(N_start_point_j+l))*imageChannels + j] *M[ (outputChannels*Mask_width*Mask_width*imageChannels) + (j*Mask_width*Mask_width) + (k*Mask_width)+l];
+             }
          }
-     }
-   }
+       }
+
 }
 // return(clamp(Pvalue));
 
  return((Pvalue));
 }
+
+/***/
