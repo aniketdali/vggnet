@@ -245,7 +245,7 @@ int main()
            {
              for(int k=0; k<outputChannels; k++)
              {
-               outputImageOnHost[(i*imageWidth)+(j*2)+k]=convolution_2D_OnHost(hostInputImageData,hostMaskData,imageWidth,imageHeight,i,j,imageChannels,k);
+               outputImageOnHost[(i*imageWidth*outputChannels)+(j*2)+k]=convolution_2D_OnHost(hostInputImageData,hostMaskData,imageWidth,imageHeight,i,j,imageChannels,k);
 
              }
            }
