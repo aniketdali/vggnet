@@ -12,20 +12,31 @@
 #include<cuda.h>
 #include<stdlib.h>
 #include<assert.h>
-#include<NN.h>
+#include<base.h>
 
 #define Mask_width  3
 #define Mask_height 3
 #define Mask_radius_x Mask_width/2
 #define Mask_radius_y Mask_height/2
-#define TILE_WIDTH 4  //16 X 16 TILE
+#define TILE_WIDTH 32 //16 X 16 TILE
 #define w_x (TILE_WIDTH + Mask_width - 1) //Shared Memory Elements needed to load as per Mask Size
 #define w_y (TILE_WIDTH + Mask_height - 1)
 #define clamp(x) (min(max((x), 0.0), 1.0))
+#define SIZE 224
+
+
+typedef enum
+{
+  CONV_1 = 0x512,
+  CONV_2 = 0x2,
+  CONV_3 = 0x3,
+}ch;
+const int out = ch(CONV_1);
 
 // Supporting functions go here
 
 // Function to convert input image(.txt) to normalized BGR format
+
 void normalizeBGR(float *hostInputImageData)
 {
     float coef[3] = { 103.939, 116.779, 123.68 };
@@ -43,16 +54,16 @@ void normalizeBGR(float *hostInputImageData)
 		    val = dval - coef[count];
 		if(count == 2)
 		    val = dval -  coef[count];
-		hostInputImageData[i]= val;	
+		hostInputImageData[i]= val;
         count++;
-        if(count == 3)	
-            count = 0;			
+        if(count == 3)
+            count = 0;
     }
 	FILE *results = fopen("results.txt", "w");
 	for(int i=0;i<SIZE*SIZE*INPUT_CHANNELS;i++) {
 				if(i % 672 == 0 && i != 0)
 					fprintf(results, "\n");
-				fprintf(results, "%.5f\t",hostInputImageData[i]); 
+				fprintf(results, "%.5f\t",hostInputImageData[i]);
 			}
 
 	fclose(input);
@@ -62,7 +73,7 @@ void normalizeBGR(float *hostInputImageData)
 // Read the weights from weights.txt file and store in memory
 void readWeights(int level,float *wconv){
 	float dval;
-	int i, j, k, l, z;
+	//int i, j, k, l, z;
 	FILE *weight;
 	FILE *conv;
     // Read the weights from text file
@@ -83,16 +94,16 @@ void readWeights(int level,float *wconv){
 			*(wconv + j*CONV_SIZE * CONV_SIZE - 1 -k) = dval;
 		}
 	}
-	
+
 	for (int i = 0; i < layers[level][0]*layers[level][1]*layers[level][2]*layers[level][3]; i++) {
-		fprintf(conv1, "%.5f\t",wconv[i]);
+		fprintf(conv, "%.5f\t",wconv[i]);
 	}
 
 	/*for (i = 0; i < layers[level][0]; i++) {
 		fscanf(weight, "%f", &dval);
 		bc[level][i] = dval;
 	}*/
-    fclose(weight);
+  fclose(weight);
 	fclose(conv);
 }
 
@@ -102,7 +113,11 @@ __global__ void convolution(float *I, const float* __restrict__ M, float *P,int 
 {
    __shared__ float N_ds[w_y][w_x];
    int k;
-   float accum[2] = {0};
+
+   float accum[out] = {0};
+//   const int size = outputChannels;
+  // float * accum = (float*)malloc(sizeof(float) * size);
+   //float accum[size] = {0};
    for (k = 0; k < channels; k++)
    {
       //1. Phase to Load Data into Shared Memory. Each Thread loads multiple elements indexed by each Batch loading
@@ -161,8 +176,7 @@ __global__ void convolution(float *I, const float* __restrict__ M, float *P,int 
       //P[(y * width + x) * channels + k] = clamp(accum);
       for(z =0;z<outputChannels;z++)
           P[(y * width*outputChannels + outputChannels*x)+z] = accum[z];
-
-//
+        //  free(accum);
 
 }
 
@@ -175,40 +189,46 @@ int main()
     int maskRows=Mask_height; // Set it as per requirement of 64 X 32
     int maskColumns=Mask_width;
 
-    int imageChannels=2;
-    int outputChannels = 2;
-    int imageWidth=8;
-    int imageHeight=8;
+    int imageChannels=3;
+    int outputChannels = 3;
+    int imageWidth=SIZE;
+    int imageHeight=SIZE;
 
-    float * hostInputImageData;
     float * hostOutputImageData;
-    float * hostMaskData;
     float * deviceInputImageData;
     float * deviceOutputImageData;
     float * deviceMaskData;
     float * outputImageOnHost;
 
-    hostMaskData = (float *) malloc(sizeof(float)*maskRows*maskColumns*imageChannels*outputChannels);
-    for(int i=0;i<maskRows*maskColumns*imageChannels*outputChannels;i++)//To set Mask of size 5*5 which has all values as 1
-    {
-      if(i<maskRows*maskColumns*imageChannels)
-        hostMaskData[i]=1;
-        else
-        hostMaskData[i]=i%9;
-    }
+
+    /*************************** conv1-1 ******************************/
+    int level = 0;
+
+
+    float * hostMaskData = (float *) malloc(sizeof(float)*layers[level][0]*layers[level][1]*layers[level][2]*layers[level][3]);
+    readWeights(level,hostMaskData);
+    // for(int i=0;i<maskRows*maskColumns*imageChannels*outputChannels;i++)//To set Mask of size 5*5 which has all values as 1
+    // {
+    //   if(i<maskRows*maskColumns*imageChannels)
+    //     hostMaskData[i]=1;
+    //     else
+    //     hostMaskData[i]=i%9;
+    // }
 
     //To store Memory
-    hostInputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*imageChannels);
+  //  hostInputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*imageChannels);
     hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
     outputImageOnHost = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
-
-    for(int i=0;i<imageWidth*imageHeight*imageChannels;i++)//To set Image data as 1.0
-    {
-     hostInputImageData[i]= i%7;
-    }
+    //
+    // for(int i=0;i<imageWidth*imageHeight*imageChannels;i++)//To set Image data as 1.0
+    // {
+    //  hostInputImageData[i]= i%7;
+    // }
+    float * hostInputImageData = (float*) malloc (sizeof (float) * SIZE * SIZE * INPUT_CHANNELS);
+    normalizeBGR (hostInputImageData);
 
     //wbCheck(cudaMalloc((void **) &deviceInputImageData, imageWidth * imageHeight * imageChannels * sizeof(float)));
-	err = cudaMalloc((void**)&deviceInputImageData, imageWidth * imageHeight * imageChannels * sizeof(float));
+	  err = cudaMalloc((void**)&deviceInputImageData, imageWidth * imageHeight * imageChannels * sizeof(float));
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate deviceInputImageData (error code %s)!\n", cudaGetErrorString(err));
@@ -287,7 +307,7 @@ int main()
 	    if(i>0 && (i%maskColumns==0))
             fprintf(dp,"\n");
 	    fprintf(dp, "%0.2f \t", *(hostMaskData+i));
-		
+
      }
 	fprintf(dp,"\n device result is here \n");
 #if 1  //comment this to run the portion of code

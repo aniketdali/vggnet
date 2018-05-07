@@ -1,11 +1,3 @@
-InitGPUMemConvPart1(float *ConvLayer_1_1_Neurons_GPU, float *ConvLayer_1_1_Weights_GPU,float *ConvLayer_1_2_Neurons_GPU,float *ConvLayer_1_2_Weights_GPU);
-InitGPUMemConvPart2(float *ConvLayer_2_1_Neurons_GPU, float *ConvLayer_2_1_Weights_GPU,float *ConvLayer_2_2_Neurons_GPU,float *ConvLayer_2_2_Weights_GPU);
-InitGPUMemConvPart3(float *ConvLayer_3_1_Neurons_GPU, float *ConvLayer_3_1_Weights_GPU,float *ConvLayer_3_2_Neurons_GPU,float *ConvLayer_3_2_Weights_GPU,float *ConvLayer_3_3_Neurons_GPU,float *ConvLayer_3_3_Weights_GPU);
-InitGPUMemConvPart4(float *ConvLayer_4_1_Neurons_GPU, float *ConvLayer_4_1_Weights_GPU,float *ConvLayer_4_2_Neurons_GPU,float *ConvLayer_4_2_Weights_GPU,float *ConvLayer_4_3_Neurons_GPU,float *ConvLayer_4_3_Weights_GPU);
-InitGPUMemConvPart5(float *ConvLayer_5_1_Neurons_GPU, float *ConvLayer_5_1_Weights_GPU,float *ConvLayer_5_2_Neurons_GPU,float *ConvLayer_5_2_Weights_GPU,float *ConvLayer_5_3_Neurons_GPU,float *ConvLayer_5_3_Weights_GPU);
-InitGPUMemFC(float *FCLayer_1_Neurons_GPU, float *FCLayer_1_Weights_GPU,float *FCLayer_2_Neurons_GPU, float *FCLayer_2_Weights_GPU,float *FCLayer_3_Neurons_GPU, float *FCLayer_3_Weights_GPU);
-InitGPUMemSFM(float *SFMLayer_1_Neurons_GPU,float *SFMLayer_1_Weights_GPU);
-
 
 // Neurons Calculation
 #define IMAGE_INPUT_PART1     224
@@ -49,7 +41,8 @@ InitGPUMemSFM(float *SFMLayer_1_Neurons_GPU,float *SFMLayer_1_Weights_GPU);
 #define FCLAYER_3_WEIGHTS (FC_CHANNELS*FC_CHANNELS)
 
 //---------------------------------jean-----------------------------
-int layers[13][4] = { 
+#define  CONV_SIZE        3
+int layers[13][4] = {
 	{ 64, 3, CONV_SIZE, CONV_SIZE },
 	{ 64, 64, CONV_SIZE, CONV_SIZE },
 	{ 128, 64, CONV_SIZE, CONV_SIZE },
@@ -65,13 +58,7 @@ int layers[13][4] = {
 	{ 512, 512, CONV_SIZE, CONV_SIZE }
 };
 
-int layers[5][4]={
-	{PART_1,IMAGE_INPUT_PART1,IMAGE_INPUT_PART1,INPUT_CHANNELS},
-	{PART_2,IMAGE_INPUT_PART2,IMAGE_INPUT_PART2,PART2_CHANNELS},
-	{PART_3,IMAGE_INPUT_PART3,IMAGE_INPUT_PART3,PART3_CHANNELS},
-    {PART_4,IMAGE_INPUT_PART4,IMAGE_INPUT_PART4,PART4_CHANNELS},
-	{PART_5,IMAGE_INPUT_PART5,IMAGE_INPUT_PART5,PART5_CHANNELS},
-}
+
 
 #define MASK_WIDTH 3
 #define TILE_SIZE_1 32
