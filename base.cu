@@ -98,9 +98,9 @@ void readWeights(int level,float *wconv, float *bias){
 	for (int i = 0; i < layers[level][0]*layers[level][1]*layers[level][2]*layers[level][3]; i++) {
 		fprintf(conv, "%.5f\t",wconv[i]);
 	}
-	
+
 	FILE *bias1 = fopen("bias.txt", "w");
-	for (i = 0; i < layers[level][0]; i++) {
+	for (int i = 0; i < layers[level][0]; i++) {
 		fscanf(weight, "%f", &dval);
 		bias[i] = dval;
 		fprintf(bias1, "%.5f\t",bias[i]);
@@ -196,7 +196,7 @@ __global__ void convolution(float *I, const float* __restrict__ M, float *P, flo
    if (y < height && x < width)
       //P[(y * width + x) * channels + k] = clamp(accum);
       for(z =0;z<outputChannels;z++)
-          P[(y * width*outputChannels + outputChannels*x)+z] = (accum[z] + b[z]);
+          P[(y * width*outputChannels + outputChannels*x)+z] = (accum[z] );//+ b[z]);
         //  free(accum);
 
 }
@@ -229,7 +229,7 @@ int main()
 
 
     float * hostMaskData = (float *) malloc(sizeof(float)*layers[level][0]*layers[level][1]*layers[level][2]*layers[level][3]);
-    readWeights(level,hostMaskData);
+    readWeights(level,hostMaskData, bias);
     // for(int i=0;i<maskRows*maskColumns*imageChannels*outputChannels;i++)//To set Mask of size 5*5 which has all values as 1
     // {
     //   if(i<maskRows*maskColumns*imageChannels)
@@ -294,7 +294,7 @@ int main()
         fprintf(stderr, "Failed to copy mask matrix from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
-	
+
 	err = cudaMemcpy(deviceBias, bias,
                 sizeof(float)*layers[12][0],
                cudaMemcpyHostToDevice);
@@ -331,12 +331,7 @@ int main()
        // Program exits if the file pointer returns NULL.
        exit(1);
    }
-   if ((rp = fopen("device_conv.txt","w")) == NULL){
-       printf("Error! opening device file");
 
-       // Program exits if the file pointer returns NULL.
-       exit(1);
-   }
     printf("\n Output from Device:\n");
 	for(int i=0;i<imageWidth*imageHeight*imageChannels;i++)
     {
@@ -353,16 +348,10 @@ int main()
 	    fprintf(dp, "%0.2f \t", *(hostMaskData+i));
 
      }
-	fprintf(dp,"\n device result is here \n");
-#if 1  //comment this to run the portion of code
-    for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
-    {
-        if(i>0 && (i%imageWidth==0))
-        //    fprintf(rp,"\n");
-      fprintf(rp, "%0.5f \t", *(hostOutputImageData+i));
-    }
-	fclose(dp);
-#endif
+     	fclose(dp);
+//	fprintf(rp,"\n device result is here \n");
+
+
 
     //Convolution on Host
     int offset =0;
@@ -372,7 +361,7 @@ int main()
            {
              for(int k=0; k<outputChannels; k++)
              {
-               outputImageOnHost[(i*imageWidth*outputChannels)+(j*outputChannels)+k]=convolution_2D_OnHost(hostInputImageData,hostMaskData,imageWidth,imageHeight,i,j,imageChannels,k) + bias[k];
+               outputImageOnHost[(i*imageWidth*outputChannels)+(j*outputChannels)+k]=convolution_2D_OnHost(hostInputImageData,hostMaskData,imageWidth,imageHeight,i,j,imageChannels,k) ;//+ bias[k];
 
              }
            }
@@ -390,7 +379,23 @@ int main()
       }
 	  fclose(hp);
 #endif
+FILE *out;
+if ((out = fopen("device_conv.txt","w")) == NULL){
+    printf("Error! opening device file");
 
+    // Program exits if the file pointer returns NULL.
+    exit(1);
+}
+
+#if 1  //comment this to run the portion of code
+    for(int j=0;j<imageWidth*imageHeight*outputChannels;j++)
+    {
+        if(j>0 && (j%imageWidth==0))
+        //    fprintf(rp,"\n");
+      fprintf(out, "%0.2f \t", *(hostOutputImageData+j));
+    }
+  fclose(out);
+#endif
 
         for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
         {
