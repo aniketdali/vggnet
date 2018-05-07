@@ -98,12 +98,15 @@ void readWeights(int level,float *wconv, float *bias){
 	for (int i = 0; i < layers[level][0]*layers[level][1]*layers[level][2]*layers[level][3]; i++) {
 		fprintf(conv, "%.5f\t",wconv[i]);
 	}
-
+	
+	FILE *bias1 = fopen("bias.txt", "w");
 	for (i = 0; i < layers[level][0]; i++) {
 		fscanf(weight, "%f", &dval);
 		bias[i] = dval;
+		fprintf(bias1, "%.5f\t",bias[i]);
 	}
     fclose(weight);
+	fclose(bias1);
 	fclose(conv);
 }
 __global__ void maxpool(float *I, float *P,int channels, int width, int height)
