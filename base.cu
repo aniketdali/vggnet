@@ -21,7 +21,7 @@
 #define TILE_WIDTH 32 //16 X 16 TILE
 #define w_x (TILE_WIDTH + Mask_width - 1) //Shared Memory Elements needed to load as per Mask Size
 #define w_y (TILE_WIDTH + Mask_height - 1)
-#define clamp(x) (min(max((x), 0.0), 1.0))
+#define clamp(x) (max(max((x), 0.0),x))
 #define SIZE 224
 
 
@@ -338,8 +338,8 @@ int main()
     for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
     {
         if(i>0 && (i%imageWidth==0))
-            fprintf(rp,"\n");
-      fprintf(rp, "%0.2f \t", *(hostOutputImageData+i));
+        //    fprintf(rp,"\n");
+      fprintf(rp, "%0.5f \t", *(hostOutputImageData+i));
     }
 	fclose(dp);
 #endif
@@ -372,11 +372,11 @@ int main()
 #endif
 
 
-        for(int i=0;i<imageWidth*imageHeight;i++)
+        for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
         {
-         if(outputImageOnHost[i]!=hostOutputImageData[i])
+         if(abs(outputImageOnHost[i]- hostOutputImageData[i]) > 0.1f)
          {
-            printf("\nMismatch at (Row,Col) = [%d][%d], hostComputed[]: %0.0f And device[]: %0.0f", i / imageWidth, i % imageHeight, outputImageOnHost[i], hostOutputImageData[i]);
+            printf("\nMismatch at (Row,Col) = [%d][%d], hostComputed[]: %0.2f And device[]: %0.2f", i / imageWidth, i % imageHeight, outputImageOnHost[i], hostOutputImageData[i]);
          }
         }
 
