@@ -71,7 +71,7 @@ void normalizeBGR(float *hostInputImageData)
 }
 
 // Read the weights from weights.txt file and store in memory
-void readWeights(int level,float *wconv){
+void readWeights(int level,float *wconv, float *bias){
 	float dval;
 	//int i, j, k, l, z;
 	FILE *weight;
@@ -99,11 +99,11 @@ void readWeights(int level,float *wconv){
 		fprintf(conv, "%.5f\t",wconv[i]);
 	}
 
-	/*for (i = 0; i < layers[level][0]; i++) {
+	for (i = 0; i < layers[level][0]; i++) {
 		fscanf(weight, "%f", &dval);
-		bc[level][i] = dval;
-	}*/
-  fclose(weight);
+		bias[i] = dval;
+	}
+    fclose(weight);
 	fclose(conv);
 }
 __global__ void maxpool(float *I, float *P,int channels, int width, int height)
@@ -127,7 +127,7 @@ __global__ void maxpool(float *I, float *P,int channels, int width, int height)
 }
 
 //@@ INSERT CODE HERE
-__global__ void convolution(float *I, const float* __restrict__ M, float *P,int channels, int width, int height,int outputChannels)
+__global__ void convolution(float *I, const float* __restrict__ M, float *P, float *b,int channels, int width, int height,int outputChannels)
 {
    __shared__ float N_ds[w_y][w_x];
    int k;
@@ -193,7 +193,7 @@ __global__ void convolution(float *I, const float* __restrict__ M, float *P,int 
    if (y < height && x < width)
       //P[(y * width + x) * channels + k] = clamp(accum);
       for(z =0;z<outputChannels;z++)
-          P[(y * width*outputChannels + outputChannels*x)+z] = accum[z];
+          P[(y * width*outputChannels + outputChannels*x)+z] = clamp(accum[z] + b[outputChannels]);
         //  free(accum);
 
 }
@@ -217,8 +217,10 @@ int main()
     float * deviceOutputImageData;
     float * deviceMaskData;
     float * outputImageOnHost;
+	float * bias;
+	float * deviceBias;
 
-
+    bias = (float *) malloc(sizeof(float)*layers[12][0]);
     /*************************** conv1-1 ******************************/
     int level = 0;
 
@@ -246,7 +248,7 @@ int main()
     normalizeBGR (hostInputImageData);
 
     //wbCheck(cudaMalloc((void **) &deviceInputImageData, imageWidth * imageHeight * imageChannels * sizeof(float)));
-	  err = cudaMalloc((void**)&deviceInputImageData, imageWidth * imageHeight * imageChannels * sizeof(float));
+	err = cudaMalloc((void**)&deviceInputImageData, imageWidth * imageHeight * imageChannels * sizeof(float));
     if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate deviceInputImageData (error code %s)!\n", cudaGetErrorString(err));
@@ -262,6 +264,12 @@ int main()
 	if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
+	err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 	printf("Copy input data from the host memory to the CUDA device\n");
@@ -283,9 +291,18 @@ int main()
         fprintf(stderr, "Failed to copy mask matrix from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
+	
+	err = cudaMemcpy(deviceBias, bias,
+                sizeof(float)*layers[12][0],
+               cudaMemcpyHostToDevice);
+    if (err != cudaSuccess)
+    {
+        fprintf(stderr, "Failed to copy input matrix from host to device (error code %s)!\n", cudaGetErrorString(err));
+        exit(EXIT_FAILURE);
+    }
     dim3 dimGrid(((imageWidth-1)/TILE_WIDTH)+1, ((imageHeight-1)/TILE_WIDTH)+1,1);
     dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
-    convolution<<<dimGrid,dimBlock>>>(deviceInputImageData, deviceMaskData, deviceOutputImageData,
+    convolution<<<dimGrid,dimBlock>>>(deviceInputImageData, deviceMaskData, deviceOutputImageData, deviceBias,
                                        imageChannels, imageWidth, imageHeight,outputChannels);
 
 
