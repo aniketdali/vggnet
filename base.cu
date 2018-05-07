@@ -27,9 +27,9 @@
 
 typedef enum
 {
-  CONV_1 = 0x512,
-  CONV_2 = 0x2,
-  CONV_3 = 0x3,
+  CONV_1 = 512,
+  CONV_2 = 2,
+  CONV_3 = 3,
 }ch;
 const int out = ch(CONV_1);
 
@@ -61,7 +61,7 @@ void normalizeBGR(float *hostInputImageData)
     }
 	FILE *results = fopen("results.txt", "w");
 	for(int i=0;i<SIZE*SIZE*INPUT_CHANNELS;i++) {
-				if(i % 672 == 0 && i != 0)
+				if(i % (SIZE*INPUT_CHANNELS) == 0 && i != 0)
 					fprintf(results, "\n");
 				fprintf(results, "%.5f\t",hostInputImageData[i]);
 			}
@@ -106,7 +106,25 @@ void readWeights(int level,float *wconv){
   fclose(weight);
 	fclose(conv);
 }
+__global__ void maxpool(float *I, float *P,int channels, int width, int height)
+{
+  // shared memory between the
+   __shared__ float N_ds[w_y][w_x];
 
+   for(int i=0 ;i<channels;i++)
+   {
+
+     // load the input in memory
+
+     // secondary load to load the input in Memory
+
+
+
+
+   }
+
+
+}
 
 //@@ INSERT CODE HERE
 __global__ void convolution(float *I, const float* __restrict__ M, float *P,int channels, int width, int height,int outputChannels)
@@ -190,7 +208,7 @@ int main()
     int maskColumns=Mask_width;
 
     int imageChannels=3;
-    int outputChannels = 3;
+    int outputChannels = 64;
     int imageWidth=SIZE;
     int imageHeight=SIZE;
 
@@ -279,7 +297,7 @@ int main()
                imageWidth * imageHeight * outputChannels * sizeof(float),
                cudaMemcpyDeviceToHost);
 
-    FILE *hp,*dp;
+    FILE *hp,*dp,*rp;
 
    if ((hp = fopen("host.txt","w")) == NULL){
        printf("Error! opening host file");
@@ -288,6 +306,12 @@ int main()
        exit(1);
    }
    if ((dp = fopen("device.txt","w")) == NULL){
+       printf("Error! opening device file");
+
+       // Program exits if the file pointer returns NULL.
+       exit(1);
+   }
+   if ((rp = fopen("device_conv.txt","w")) == NULL){
        printf("Error! opening device file");
 
        // Program exits if the file pointer returns NULL.
@@ -314,8 +338,8 @@ int main()
     for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
     {
         if(i>0 && (i%imageWidth==0))
-            fprintf(dp,"\n");
-      fprintf(dp, "%0.2f \t", *(hostOutputImageData+i));
+            fprintf(rp,"\n");
+      fprintf(rp, "%0.2f \t", *(hostOutputImageData+i));
     }
 	fclose(dp);
 #endif
