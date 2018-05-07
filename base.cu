@@ -317,7 +317,7 @@ int main()
                imageWidth * imageHeight * outputChannels * sizeof(float),
                cudaMemcpyDeviceToHost);
 
-    FILE *hp,*dp,*rp;
+    FILE *hp,*dp;
 
    if ((hp = fopen("host.txt","w")) == NULL){
        printf("Error! opening host file");
@@ -368,7 +368,7 @@ int main()
           }
 
     printf("\n Output from Host:\n");
-#if 1
+#if 0
     for(int i=0;i<(imageWidth*imageHeight*outputChannels);i++)
       {
         if(i>0 && (i%imageWidth==0))
@@ -387,7 +387,7 @@ if ((out = fopen("device_conv.txt","w")) == NULL){
     exit(1);
 }
 
-#if 1  //comment this to run the portion of code
+#if 0  //comment this to run the portion of code
     for(int j=0;j<imageWidth*imageHeight*outputChannels;j++)
     {
         if(j>0 && (j%imageWidth==0))
@@ -399,12 +399,21 @@ if ((out = fopen("device_conv.txt","w")) == NULL){
 
         for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
         {
+		  if(i>0 && (i%imageWidth==0))
+		  {
+		       fprintf(out,"\n");
+               fprintf(hp,"\n");			   
+		  }
+		      fprintf(out, "%0.2f \t", *(hostOutputImageData+i));
+			  fprintf(hp, "%0.2f \t", *(outputImageOnHost+i));
+		  
          if(abs(outputImageOnHost[i]- hostOutputImageData[i]) > 0.1f)
          {
             printf("\nMismatch at (Row,Col) = [%d][%d], hostComputed[]: %0.2f And device[]: %0.2f", i / imageWidth, i % imageHeight, outputImageOnHost[i], hostOutputImageData[i]);
          }
         }
-
+    fclose(out);
+	fclose(hp);
     cudaFree(deviceInputImageData);
     cudaFree(deviceOutputImageData);
     cudaFree(deviceMaskData);
