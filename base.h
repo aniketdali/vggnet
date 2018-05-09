@@ -58,7 +58,12 @@ int layers[13][4] = {
 	{ 512, 512, CONV_SIZE, CONV_SIZE }
 };
 
-
+int dense[3][2] = {
+	{ 25088, 4096 },
+	{ 4096, 4096 },
+	{ 4096, 1000 }
+};
 
 #define MASK_WIDTH 3
 #define TILE_SIZE_1 32
+
