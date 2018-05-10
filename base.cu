@@ -63,7 +63,7 @@ void softmax(float *prediction, int classes) {
 }
 
 // Fully connected layer definition
-__global__ void fully_connected(float *I, const float* __restrict__ M, float *P,int channels, int width, int height,int outputChannels)
+__global__ void fully_connected(float *I, const float* __restrict__ M, float *P,int channels, int width, int height,int numberofOutputChannels)
 {
    __shared__ float F_ds[7][7];
    //__shared__ float W_ds[f_y][f_x];
@@ -79,26 +79,26 @@ __global__ void fully_connected(float *I, const float* __restrict__ M, float *P,
 
         __syncthreads();
 
-        int y, x,z;
+
         if(threadIdx.y == 0 && threadIdx.x ==0 &&blockIdx.y == 0 && blockIdx.x == 0)
         {
 
-          for(int z =0;z<outputChannels;z++)
+          for(int z =0;z<numberofOutputChannels;z++)
           {
               for(int i =0; i< TILE_WIDTH; i++)
               {
                 for(int j =0; j<TILE_WIDTH; j++)
                 {
-                     //printf("%.2f \t %.2f \t",F_ds[i][j],M[i*TILE_WIDTH + TILE_WIDTH*TILE_WIDTH*z+ outputChannels*k*TILE_WIDTH*TILE_WIDTH+ j]);
+                     //printf("%.2f \t %.2f \t",F_ds[i][j],M[i*TILE_WIDTH + TILE_WIDTH*TILE_WIDTH*z+ numberofOutputChannels*k*TILE_WIDTH*TILE_WIDTH+ j]);
 
-                    acc[z] += F_ds[i][j] * M[i*TILE_WIDTH + TILE_WIDTH*TILE_WIDTH*z+ outputChannels*k*TILE_WIDTH*TILE_WIDTH+ j];
-                    
+                    acc[z] += F_ds[i][j] * M[i*TILE_WIDTH + TILE_WIDTH*TILE_WIDTH*z+ numberofOutputChannels*k*TILE_WIDTH*TILE_WIDTH+ j];
+
 
                 }
 
               //  printf("\n");
               }
-            
+
           }
 
 
@@ -109,7 +109,7 @@ __global__ void fully_connected(float *I, const float* __restrict__ M, float *P,
    }
    if(threadIdx.y == 0 && threadIdx.x ==0 &&blockIdx.y == 0 && blockIdx.x == 0)
    {
-     for(int z =0;z<outputChannels;z++)
+     for(int z =0;z<numberofOutputChannels;z++)
      {
         //printf("%.2f\t",acc[z]);
         P[z] = acc[z];
@@ -153,10 +153,10 @@ void normalizeBGR(float *hostInputImageData)
 	fclose(input);
 	fclose(results);
 }
-static unsigned int pos = 0;
+//static unsigned int pos = 0;
 FILE *weight = fopen("weights.txt", "r");
 
-// Read the weights from weights.txt file and store 
+// Read the weights from weights.txt file and store
 void readWeights(int level,float *wconv, float *bias){
 	float dval;
 	//int i, j, k, l, z;
@@ -282,7 +282,7 @@ __global__ void maxpool(float *image, float * output,int number_of_channels, int
   }
 }
 // Fully connected layer
-__global__ void fully1(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels,float *b)
+__global__ void fully1(float *I, const float* __restrict__ M, float *P,int channels,int numberofOutputChannels,float *b)
 {
    __shared__ float F_ds[7][7];
 
@@ -294,11 +294,11 @@ __global__ void fully1(float *I, const float* __restrict__ M, float *P,int chann
          F_ds[threadIdx.x][threadIdx.y] = I[(threadIdx.x + (blockIdx.x * TILE_WIDTH)) * (7 * channels) + threadIdx.y * channels + current_channel + blockIdx.y * (TILE_WIDTH) ]; //
         __syncthreads();
 
-        int y, x,z;
+
         if(threadIdx.y == 0 && threadIdx.x ==0)
         {
 
-          for(int z =0;z<outputChannels;z++)
+          for(int z =0;z<numberofOutputChannels;z++)
           {
               for(int i =0; i< 7; i++)
               {
@@ -314,7 +314,7 @@ __global__ void fully1(float *I, const float* __restrict__ M, float *P,int chann
    }
    if(threadIdx.y == 0 && threadIdx.x ==0)
    {
-     for(int z =0;z<outputChannels;z++)
+     for(int z =0;z<numberofOutputChannels;z++)
      {
 
         P[z] = acc[z] +b[z];
@@ -323,7 +323,7 @@ __global__ void fully1(float *I, const float* __restrict__ M, float *P,int chann
    }
 }
 
-__global__ void fully2(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels,float *b)
+__global__ void fully2(float *I, const float* __restrict__ M, float *P,int channels,int numberofOutputChannels,float *b)
 {
    __shared__ float F_ds[4][32][32];
 
@@ -340,7 +340,7 @@ __global__ void fully2(float *I, const float* __restrict__ M, float *P,int chann
      {
         int i,j,k;
 
-          for (int current_op_channel = 0; current_op_channel < outputChannels; current_op_channel++)
+          for (int current_op_channel = 0; current_op_channel < numberofOutputChannels; current_op_channel++)
           {
 
                  for(int current_channel =0; current_channel<channels;current_channel++)
@@ -352,7 +352,7 @@ __global__ void fully2(float *I, const float* __restrict__ M, float *P,int chann
                  }
            }
 
-         for(int z =0;z<outputChannels;z++)
+         for(int z =0;z<numberofOutputChannels;z++)
          {
               P[z] = clamp(acc[z] + b[z]);
          }
@@ -360,7 +360,7 @@ __global__ void fully2(float *I, const float* __restrict__ M, float *P,int chann
       }
 }
 
-__global__ void fully3(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels,float *b)
+__global__ void fully3(float *I, const float* __restrict__ M, float *P,int channels,int numberofOutputChannels,float *b)
 {
    __shared__ float F_ds[4][32][32];
 
@@ -376,7 +376,7 @@ __global__ void fully3(float *I, const float* __restrict__ M, float *P,int chann
      if(threadIdx.y == 0 && threadIdx.x ==0)
      {
         int i,j,k;
-         for (int current_op_channel = 0; current_op_channel < outputChannels; current_op_channel++)
+         for (int current_op_channel = 0; current_op_channel < numberofOutputChannels; current_op_channel++)
          {
 
                 for(int current_channel =0; current_channel<channels;current_channel++)
@@ -390,7 +390,7 @@ __global__ void fully3(float *I, const float* __restrict__ M, float *P,int chann
                 }
           }
 
-         for(int z =0;z<outputChannels;z++)
+         for(int z =0;z<numberofOutputChannels;z++)
          {
                        P[z] = clamp(acc[z] + b[z]);
          }
@@ -399,15 +399,15 @@ __global__ void fully3(float *I, const float* __restrict__ M, float *P,int chann
 }
 
 // In first go, all of the threads will load the image pixels TILE_WIDTH * TILE_WIDTH on the second go first (TILE_WIDTH-mask radius)^2 threads will load the image.
-__global__ void convolution(float *I, const float* __restrict__ M, float *P, float *b,int channels, int width, int height,int outputChannels)
+__global__ void convolution(float *I, const float* __restrict__ M, float *P, float *b,int channels, int width, int height,int numberofOutputChannels)
 {
    __shared__ float N_ds[B_y][B_x];
-   int k;int dest_Y;int dest_X;int src_X; int src_Y;int src;
+   int dest_Y;int dest_X;int src_X; int src_Y;int src;int dest;
 
    float accum[out] = {0};
 
    // for all the image channels
-   for (current_channel = 0; current_channel < channels; current_channel++)
+   for (int current_channel = 0; current_channel < channels; current_channel++)
    {
 
 
@@ -443,7 +443,7 @@ __global__ void convolution(float *I, const float* __restrict__ M, float *P, flo
       __syncthreads();
 
       int y, x,z;
-      for(z =0;z<outputChannels;z++)
+      for(z =0;z<numberofOutputChannels;z++)
         for (y = 0; y < Mask_width; y++)
            for (x = 0; x < Mask_width; x++)
               //                                                                                        navigation with input channel mask  inside mask navigate
@@ -457,11 +457,11 @@ __global__ void convolution(float *I, const float* __restrict__ M, float *P, flo
    x = blockIdx.x * TILE_WIDTH + threadIdx.x;
    if (y < height && x < width)
    // add bias and relu
-      for(z =0;z<outputChannels;z++)
-          P[(y * width*outputChannels + outputChannels*x)+z] = clamp(accum[z]  + b[z]);
+      for(z =0;z<numberofOutputChannels;z++)
+          P[(y * width*numberofOutputChannels + numberofOutputChannels*x)+z] = clamp(accum[z]  + b[z]);
 }
 
-float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int j,int imageChannels ,int outputChannels);
+float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int j,int numberofImageChannels ,int numberofOutputChannels);
 
 int main()
 {
@@ -480,75 +480,75 @@ int main()
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
 
-    int maskRows=Mask_height; // Set it as per requirement of 64 X 32
-    int maskColumns=Mask_width;
+    int mask_Rows=Mask_height; // Set it as per requirement of 64 X 32
+    int mask_cols=Mask_width;
 
-    int imageChannels=3;
-    int outputChannels = 64;
-    int imageWidth=SIZE;
-    int imageHeight=SIZE;
+    int numberofImageChannels=3;
+    int numberofOutputChannels = 64;
+    int width_image=SIZE;
+    int height_image=SIZE;
 
-    float * hostOutputImageData;
-    float * hostOutputMaxPooledData;
-    float * deviceInputImageData;
+    float * host_Image_output;
+    float * host_maxpool_output;
+    float * device_image_input;
     float * deviceOutputImageData_1_1;
-    float * deviceOutputMaxPooledData;
-  //  float * deviceInputImageData;
-    float * deviceMaskData;
+    float * device_maxpool_output;
+  //  float * device_image_input;
+    float * device_mask_weights;
     //float * outputImageOnHost;
-    float * deviceInputMaxPool;
+    float * device_maxpool_input;
 	float * bias;
-	float * deviceBias;
+	float * device_bias;
   float *biasDense = (float *) malloc(sizeof(float)*dense[0][1]);
 
     bias = (float *) malloc(sizeof(float)*layers[12][0]);
     /*************************** conv1-1 ******************************/
     int level = 0;
     // layer parameters
-    outputChannels = layers[level][0];
-    imageChannels = layers[level][1];
+    numberofOutputChannels = layers[level][0];
+    numberofImageChannels = layers[level][1];
 
 
-    float * hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
+    float * hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
     readWeights(level,hostMaskData, bias);
 
 
     //To store Memory
 
-    hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
-    //outputImageOnHost = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
+    host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
+    //outputImageOnHost = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
 
     float * hostInputImageData = (float*) malloc (sizeof (float) * SIZE * SIZE * INPUT_CHANNELS);
     normalizeBGR (hostInputImageData);
 
-    //wbCheck(cudaMalloc((void **) &deviceInputImageData, imageWidth * imageHeight * imageChannels * sizeof(float)));
-	err = cudaMalloc((void**)&deviceInputImageData, imageWidth * imageHeight * imageChannels * sizeof(float));
+    //wbCheck(cudaMalloc((void **) &device_image_input, width_image * height_image * numberofImageChannels * sizeof(float)));
+	err = cudaMalloc((void**)&device_image_input, width_image * height_image * numberofImageChannels * sizeof(float));
     if (err != cudaSuccess)
     {
-        fprintf(stderr, "Failed to allocate deviceInputImageData (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to allocate device_image_input (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
-    err = cudaMalloc((void **) &deviceOutputImageData_1_1, imageWidth * imageHeight *outputChannels* sizeof(float));
+    err = cudaMalloc((void **) &deviceOutputImageData_1_1, width_image * height_image *numberofOutputChannels* sizeof(float));
 	if (err != cudaSuccess)
     {
         fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
-    err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+    err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
 	if (err != cudaSuccess)
     {
-        fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
-	err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+	err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
     if (err != cudaSuccess)
     {
-        fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 	printf("Copy input data from the host memory to the CUDA device level 1_1\n");
-    err = cudaMemcpy(deviceInputImageData, hostInputImageData,
-               imageWidth * imageHeight * imageChannels * sizeof(float),
+    err = cudaMemcpy(device_image_input, hostInputImageData,
+               width_image * height_image * numberofImageChannels * sizeof(float),
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
     {
@@ -556,9 +556,9 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMemcpy(deviceMaskData,
+    err = cudaMemcpy(device_mask_weights,
                hostMaskData,
-               outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+               numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
     {
@@ -566,7 +566,7 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-	err = cudaMemcpy(deviceBias, bias,
+	err = cudaMemcpy(device_bias, bias,
                 sizeof(float)*layers[12][0],
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
@@ -574,18 +574,18 @@ int main()
         fprintf(stderr, "Failed to copy input matrix from host to device (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
-    dim3 dimGrid(((imageWidth-1)/TILE_WIDTH)+1, ((imageHeight-1)/TILE_WIDTH)+1,1);
+    dim3 dimGrid(((width_image-1)/TILE_WIDTH)+1, ((height_image-1)/TILE_WIDTH)+1,1);
     dim3 dimBlock(TILE_WIDTH, TILE_WIDTH, 1);
 
     cudaEventRecord(start);
 
-    convolution<<<dimGrid,dimBlock>>>(deviceInputImageData, deviceMaskData, deviceOutputImageData_1_1, deviceBias,
-                                       imageChannels, imageWidth, imageHeight,outputChannels);
+    convolution<<<dimGrid,dimBlock>>>(device_image_input, device_mask_weights, deviceOutputImageData_1_1, device_bias,
+                                       numberofImageChannels, width_image, height_image,numberofOutputChannels);
 
 
-    cudaMemcpy(hostOutputImageData,
+    cudaMemcpy(host_Image_output,
               deviceOutputImageData_1_1,
-              imageWidth * imageHeight * outputChannels * sizeof(float),
+              width_image * height_image * numberofOutputChannels * sizeof(float),
               cudaMemcpyDeviceToHost);
 
     cudaDeviceSynchronize();
@@ -595,9 +595,9 @@ int main()
         printf("Error! opening device file");
     exit(1);
     }
-    for(int i=0;i<outputChannels*imageChannels*CONV_SIZE*CONV_SIZE;i++)
+    for(int i=0;i<numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE;i++)
     {
-        if(i>0 && (i%imageWidth==0))
+        if(i>0 && (i%width_image==0))
         {
              fprintf(level0,"\n");
 
@@ -610,39 +610,39 @@ int main()
 
    // Free conv_1_1 Memory
    free(hostMaskData);
-   cudaFree(deviceMaskData);
-   cudaFree(deviceBias);
-   free(hostOutputImageData);
-   cudaFree(deviceInputImageData);
+   cudaFree(device_mask_weights);
+   cudaFree(device_bias);
+   free(host_Image_output);
+   cudaFree(device_image_input);
    free(hostInputImageData);
      /*************************** conv1-1 end******************************/
      /*************************** conv1-2 start ******************************/
      level = 1;
      // layer parameters
 
-     outputChannels = layers[level][0];
-     imageChannels = layers[level][1];
+     numberofOutputChannels = layers[level][0];
+     numberofImageChannels = layers[level][1];
 
      float * deviceOutputImageData_1_2;
 
-     hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-     hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
+     hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+     host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
 
-     err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+     err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
       if (err != cudaSuccess)
       {
-          fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+          fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
           exit(EXIT_FAILURE);
       }
 
-     err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+     err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
      if (err != cudaSuccess)
      {
-         fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+         fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
          exit(EXIT_FAILURE);
      }
 
-    err = cudaMalloc((void **) &deviceOutputImageData_1_2, imageWidth * imageHeight *outputChannels* sizeof(float));
+    err = cudaMalloc((void **) &deviceOutputImageData_1_2, width_image * height_image *numberofOutputChannels* sizeof(float));
     if (err != cudaSuccess)
      {
          fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -652,7 +652,7 @@ int main()
 
      printf("Copy input data from the host memory to the CUDA device level 1_2\n");
      // Copy device bias
-     err = cudaMemcpy(deviceBias, bias,
+     err = cudaMemcpy(device_bias, bias,
                    sizeof(float)*layers[12][0],
                   cudaMemcpyHostToDevice);
        if (err != cudaSuccess)
@@ -661,9 +661,9 @@ int main()
            exit(EXIT_FAILURE);
        }
       // Copy device mask
-       err = cudaMemcpy(deviceMaskData,
+       err = cudaMemcpy(device_mask_weights,
                   hostMaskData,
-                  outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+                  numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
                   cudaMemcpyHostToDevice);
 
        if (err != cudaSuccess)
@@ -672,11 +672,11 @@ int main()
            exit(EXIT_FAILURE);
        }
 
-     convolution<<<dimGrid,dimBlock>>>(deviceOutputImageData_1_1, deviceMaskData, deviceOutputImageData_1_2, deviceBias,
-                                        imageChannels, imageWidth, imageHeight,outputChannels);
-     cudaMemcpy(hostOutputImageData,
+     convolution<<<dimGrid,dimBlock>>>(deviceOutputImageData_1_1, device_mask_weights, deviceOutputImageData_1_2, device_bias,
+                                        numberofImageChannels, width_image, height_image,numberofOutputChannels);
+     cudaMemcpy(host_Image_output,
               deviceOutputImageData_1_2,
-              imageWidth * imageHeight * outputChannels * sizeof(float),
+              width_image * height_image * numberofOutputChannels * sizeof(float),
               cudaMemcpyDeviceToHost);
      cudaDeviceSynchronize();
       // Program exits if the file pointer returns NULL.
@@ -685,14 +685,14 @@ int main()
           printf("Error! opening device file");
       exit(1);
       }
-      for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+      for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
       {
-      	  if(i>0 && (i%imageWidth==0))
+      	  if(i>0 && (i%width_image==0))
       	  {
       	       fprintf(out,"\n");
 
       	  }
-	      fprintf(out, "%0.2f \t", *(hostOutputImageData+i));
+	      fprintf(out, "%0.2f \t", *(host_Image_output+i));
 
 
       }
@@ -703,9 +703,9 @@ int main()
           printf("Error! opening device file");
       exit(1);
       }
-      for(int i=0;i<outputChannels*imageChannels*CONV_SIZE*CONV_SIZE;i++)
+      for(int i=0;i<numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE;i++)
       {
-          if(i>0 && (i%imageWidth==0))
+          if(i>0 && (i%width_image==0))
           {
                fprintf(level1,"\n");
 
@@ -718,31 +718,31 @@ int main()
 
       // Free conv_1_1 Memory
       free(hostMaskData);
-      cudaFree(deviceMaskData);
-      cudaFree(deviceBias);
-      free(hostOutputImageData);
+      cudaFree(device_mask_weights);
+      cudaFree(device_bias);
+      free(host_Image_output);
       cudaFree(deviceOutputImageData_1_1);
 
      /*************************** conv1-2 end ******************************/
      /*************************** conv1-maxpool start ******************************/
      // Layer parameters
 
-     hostOutputMaxPooledData = (float *) malloc(sizeof(float)*imageWidth/2*imageHeight/2*outputChannels);
-     err = cudaMalloc((void**) &deviceOutputMaxPooledData, imageWidth/2 * imageHeight/2 * outputChannels * sizeof(float));
+     host_maxpool_output = (float *) malloc(sizeof(float)*width_image/2*height_image/2*numberofOutputChannels);
+     err = cudaMalloc((void**) &device_maxpool_output, width_image/2 * height_image/2 * numberofOutputChannels * sizeof(float));
      if (err != cudaSuccess)
      {
-         fprintf(stderr, "Failed to allocate deviceInputImageData (error code %s)!\n", cudaGetErrorString(err));
+         fprintf(stderr, "Failed to allocate device_image_input (error code %s)!\n", cudaGetErrorString(err));
          exit(EXIT_FAILURE);
      }
-    err = cudaMalloc((void**) &deviceInputMaxPool, imageWidth * imageHeight * outputChannels * sizeof(float));
+    err = cudaMalloc((void**) &device_maxpool_input, width_image * height_image * numberofOutputChannels * sizeof(float));
     if (err != cudaSuccess)
     {
-        fprintf(stderr, "Failed to allocate deviceInputImageData (error code %s)!\n", cudaGetErrorString(err));
+        fprintf(stderr, "Failed to allocate device_image_input (error code %s)!\n", cudaGetErrorString(err));
         exit(EXIT_FAILURE);
     }
 
-    err = cudaMemcpy(deviceInputMaxPool, hostOutputImageData,
-               imageWidth * imageHeight * outputChannels * sizeof(float),
+    err = cudaMemcpy(device_maxpool_input, host_Image_output,
+               width_image * height_image * numberofOutputChannels * sizeof(float),
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
     {
@@ -752,17 +752,17 @@ int main()
 
     // image 224
     int blockwidth = 32;
-    int number_blocks = imageWidth/blockwidth;
+    int number_blocks = width_image/blockwidth;
     dim3 dimGrid_m1(number_blocks,number_blocks,1);
     dim3 dimBlock_m1(blockwidth,blockwidth,1);
-  maxpool<<<dimGrid_m1,dimBlock_m1>>>(deviceOutputImageData_1_2,deviceOutputMaxPooledData ,outputChannels, imageHeight, imageWidth,blockwidth);
+  maxpool<<<dimGrid_m1,dimBlock_m1>>>(deviceOutputImageData_1_2,device_maxpool_output ,numberofOutputChannels, height_image, width_image,blockwidth);
 
 
   cudaDeviceSynchronize();
 
-  cudaMemcpy(hostOutputMaxPooledData,
-             deviceOutputMaxPooledData,
-             imageWidth/2 * imageHeight/2 * outputChannels * sizeof(float),
+  cudaMemcpy(host_maxpool_output,
+             device_maxpool_output,
+             width_image/2 * height_image/2 * numberofOutputChannels * sizeof(float),
              cudaMemcpyDeviceToHost);
 
      FILE *mp;
@@ -774,52 +774,52 @@ int main()
          exit(1);
      }
 
-      for(int i=0;i<imageWidth/2*imageHeight/2*outputChannels;i++)
+      for(int i=0;i<width_image/2*height_image/2*numberofOutputChannels;i++)
          {
-              if(i>0 && (i%(imageWidth/2 * outputChannels)==0))
+              if(i>0 && (i%(width_image/2 * numberofOutputChannels)==0))
                  fprintf(mp,"\n");
 
-           fprintf(mp, "%0.2f \t", *(hostOutputMaxPooledData+i));
+           fprintf(mp, "%0.2f \t", *(host_maxpool_output+i));
          }
 
-  //  cudaFree(deviceOutputMaxPooledData);
+  //  cudaFree(device_maxpool_output);
     cudaFree(deviceOutputImageData_1_2);
-    cudaFree(deviceInputMaxPool);
+    cudaFree(device_maxpool_input);
 
-    free(hostOutputMaxPooledData);
+    free(host_maxpool_output);
 /********************************conv_1 max end**********************************************/
 
 /*******************************conv_2_1 start**********************************************/
 // Layer parameters
-  imageWidth /= 2;
-  imageHeight /= 2;
+  width_image /= 2;
+  height_image /= 2;
 
   // Layer 4 (Convolution 64 -> 128)
   level = 2;
-  outputChannels = layers[level][0];
-  imageChannels = layers[level][1];
+  numberofOutputChannels = layers[level][0];
+  numberofImageChannels = layers[level][1];
 
 
   float * deviceOutputImageData_2_1;
 
-  hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-  hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
-  err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+  hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+  host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
+  err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
    if (err != cudaSuccess)
    {
-       fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+       fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
        exit(EXIT_FAILURE);
    }
 
 
-  err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+  err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
   if (err != cudaSuccess)
   {
-      fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+      fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
   }
 
- err = cudaMalloc((void **) &deviceOutputImageData_2_1, imageWidth * imageHeight *outputChannels* sizeof(float));
+ err = cudaMalloc((void **) &deviceOutputImageData_2_1, width_image * height_image *numberofOutputChannels* sizeof(float));
  if (err != cudaSuccess)
   {
       fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -829,7 +829,7 @@ int main()
 
   printf("Copy input data from the host memory to the CUDA device level 2_1\n");
   // Copy device bias
-  err = cudaMemcpy(deviceBias, bias,
+  err = cudaMemcpy(device_bias, bias,
                 sizeof(float)*layers[12][0],
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
@@ -838,9 +838,9 @@ int main()
         exit(EXIT_FAILURE);
     }
    // Copy device mask
-    err = cudaMemcpy(deviceMaskData,
+    err = cudaMemcpy(device_mask_weights,
                hostMaskData,
-               outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+               numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
                cudaMemcpyHostToDevice);
 
     if (err != cudaSuccess)
@@ -849,13 +849,13 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    dim3 dimGrid_2(((imageWidth-1)/TILE_WIDTH)+1, ((imageHeight-1)/TILE_WIDTH)+1,1);
+    dim3 dimGrid_2(((width_image-1)/TILE_WIDTH)+1, ((height_image-1)/TILE_WIDTH)+1,1);
     dim3 dimBlock_2(TILE_WIDTH, TILE_WIDTH, 1);
-  convolution<<<dimGrid_2,dimBlock_2>>>(deviceOutputMaxPooledData, deviceMaskData, deviceOutputImageData_2_1, deviceBias,
-                                     imageChannels, imageWidth, imageHeight,outputChannels);
-  cudaMemcpy(hostOutputImageData,
+  convolution<<<dimGrid_2,dimBlock_2>>>(device_maxpool_output, device_mask_weights, deviceOutputImageData_2_1, device_bias,
+                                     numberofImageChannels, width_image, height_image,numberofOutputChannels);
+  cudaMemcpy(host_Image_output,
            deviceOutputImageData_2_1,
-           imageWidth * imageHeight * outputChannels * sizeof(float),
+           width_image * height_image * numberofOutputChannels * sizeof(float),
            cudaMemcpyDeviceToHost);
   cudaDeviceSynchronize();
    // Program exits if the file pointer returns NULL.
@@ -864,14 +864,14 @@ int main()
        printf("Error! opening device file");
    exit(1);
    }
-   for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+   for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
    {
-       if(i>0 && (i%imageWidth==0))
+       if(i>0 && (i%width_image==0))
        {
             fprintf(out2_1,"\n");
 
        }
-     fprintf(out2_1, "%0.2f \t", *(hostOutputImageData+i));
+     fprintf(out2_1, "%0.2f \t", *(host_Image_output+i));
 
 
    }
@@ -882,9 +882,9 @@ int main()
        printf("Error! opening device file");
    exit(1);
    }
-   for(int i=0;i<outputChannels*imageChannels*CONV_SIZE*CONV_SIZE;i++)
+   for(int i=0;i<numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE;i++)
    {
-       if(i>0 && (i%imageWidth==0))
+       if(i>0 && (i%width_image==0))
        {
             fprintf(level2_1,"\n");
 
@@ -897,10 +897,10 @@ int main()
 
    // Free conv_2_1 Memory
   free(hostMaskData);
-   cudaFree(deviceMaskData);
-   free(hostOutputImageData);
-   cudaFree(deviceBias);
-   //cudaFree(deviceOutputMaxPooledData);
+   cudaFree(device_mask_weights);
+   free(host_Image_output);
+   cudaFree(device_bias);
+   //cudaFree(device_maxpool_output);
 
 
 /*******************************conv_2_1 end**********************************************/
@@ -909,30 +909,30 @@ int main()
 
   // Layer 4 (Convolution 128-> 128)
   level = 3;
-  outputChannels = layers[level][0];
-  imageChannels = layers[level][1];
+  numberofOutputChannels = layers[level][0];
+  numberofImageChannels = layers[level][1];
 
 
   float * deviceOutputImageData_2_2;
 
-  hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-  hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
-  err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+  hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+  host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
+  err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
    if (err != cudaSuccess)
    {
-       fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+       fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
        exit(EXIT_FAILURE);
    }
 
 
-  err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+  err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
   if (err != cudaSuccess)
   {
-      fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+      fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
   }
 
- err = cudaMalloc((void **) &deviceOutputImageData_2_2, imageWidth * imageHeight *outputChannels* sizeof(float));
+ err = cudaMalloc((void **) &deviceOutputImageData_2_2, width_image * height_image *numberofOutputChannels* sizeof(float));
  if (err != cudaSuccess)
   {
       fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -942,7 +942,7 @@ int main()
 
   printf("Copy input data from the host memory to the CUDA device level 2_1\n");
   // Copy device bias
-  err = cudaMemcpy(deviceBias, bias,
+  err = cudaMemcpy(device_bias, bias,
                 sizeof(float)*layers[12][0],
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
@@ -951,9 +951,9 @@ int main()
         exit(EXIT_FAILURE);
     }
    // Copy device mask
-    err = cudaMemcpy(deviceMaskData,
+    err = cudaMemcpy(device_mask_weights,
                hostMaskData,
-               outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+               numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
                cudaMemcpyHostToDevice);
 
     if (err != cudaSuccess)
@@ -962,11 +962,11 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-  convolution<<<dimGrid_2,dimBlock_2>>>(deviceOutputImageData_2_1, deviceMaskData, deviceOutputImageData_2_2, deviceBias,
-                                     imageChannels, imageWidth, imageHeight,outputChannels);
-  cudaMemcpy(hostOutputImageData,
+  convolution<<<dimGrid_2,dimBlock_2>>>(deviceOutputImageData_2_1, device_mask_weights, deviceOutputImageData_2_2, device_bias,
+                                     numberofImageChannels, width_image, height_image,numberofOutputChannels);
+  cudaMemcpy(host_Image_output,
            deviceOutputImageData_2_2,
-           imageWidth * imageHeight * outputChannels * sizeof(float),
+           width_image * height_image * numberofOutputChannels * sizeof(float),
            cudaMemcpyDeviceToHost);
   cudaDeviceSynchronize();
    // Program exits if the file pointer returns NULL.
@@ -975,14 +975,14 @@ int main()
        printf("Error! opening device file");
    exit(1);
    }
-   for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+   for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
    {
-       if(i>0 && (i%imageWidth==0))
+       if(i>0 && (i%width_image==0))
        {
             fprintf(out2_2,"\n");
 
        }
-     fprintf(out2_2, "%0.2f \t", *(hostOutputImageData+i));
+     fprintf(out2_2, "%0.2f \t", *(host_Image_output+i));
 
 
    }
@@ -993,9 +993,9 @@ int main()
        printf("Error! opening device file");
    exit(1);
    }
-   for(int i=0;i<outputChannels*imageChannels*CONV_SIZE*CONV_SIZE;i++)
+   for(int i=0;i<numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE;i++)
    {
-       if(i>0 && (i%imageWidth==0))
+       if(i>0 && (i%width_image==0))
        {
             fprintf(level2_2,"\n");
 
@@ -1008,36 +1008,36 @@ int main()
 
    // Free conv_2_1 Memory
   free(hostMaskData);
-   cudaFree(deviceMaskData);
-   cudaFree(deviceBias);
-   free(hostOutputImageData);
+   cudaFree(device_mask_weights);
+   cudaFree(device_bias);
+   free(host_Image_output);
    cudaFree(deviceOutputImageData_2_1);
 
 /******************************conv_2_2 end*********************************************/
 
 /******************************max2 start**********************************************/
     float * deviceOutputMaxPooledData2;
-     hostOutputMaxPooledData = (float *) malloc(sizeof(float)*imageWidth/2*imageHeight/2*outputChannels);
-     err = cudaMalloc((void**) &deviceOutputMaxPooledData2, imageWidth/2 * imageHeight/2 * outputChannels * sizeof(float));
+     host_maxpool_output = (float *) malloc(sizeof(float)*width_image/2*height_image/2*numberofOutputChannels);
+     err = cudaMalloc((void**) &deviceOutputMaxPooledData2, width_image/2 * height_image/2 * numberofOutputChannels * sizeof(float));
      if (err != cudaSuccess)
      {
-         fprintf(stderr, "Failed to allocate deviceInputImageData (error code %s)!\n", cudaGetErrorString(err));
+         fprintf(stderr, "Failed to allocate device_image_input (error code %s)!\n", cudaGetErrorString(err));
          exit(EXIT_FAILURE);
      }
      // image 112
      blockwidth = 16;
-     number_blocks = imageWidth/blockwidth;
+     number_blocks = width_image/blockwidth;
      dim3 dimGrid_m2(number_blocks,number_blocks,1);
      dim3 dimBlock_m2(blockwidth,blockwidth,1);
 
-  maxpool<<<dimGrid_m2,dimBlock_m2>>>(deviceOutputImageData_2_2,deviceOutputMaxPooledData2 ,outputChannels, imageHeight, imageWidth,blockwidth);
+  maxpool<<<dimGrid_m2,dimBlock_m2>>>(deviceOutputImageData_2_2,deviceOutputMaxPooledData2 ,numberofOutputChannels, height_image, width_image,blockwidth);
 
 
   cudaDeviceSynchronize();
 
-  cudaMemcpy(hostOutputMaxPooledData,
+  cudaMemcpy(host_maxpool_output,
              deviceOutputMaxPooledData2,
-             imageWidth/2 * imageHeight/2 * outputChannels * sizeof(float),
+             width_image/2 * height_image/2 * numberofOutputChannels * sizeof(float),
              cudaMemcpyDeviceToHost);
 
      FILE *mp_2;
@@ -1049,53 +1049,53 @@ int main()
          exit(1);
      }
 
-      for(int i=0;i<imageWidth/2*imageHeight/2*outputChannels;i++)
+      for(int i=0;i<width_image/2*height_image/2*numberofOutputChannels;i++)
          {
-              if(i>0 && (i%(imageWidth/2 * outputChannels)==0))
+              if(i>0 && (i%(width_image/2 * numberofOutputChannels)==0))
                  fprintf(mp_2,"\n");
 
-           fprintf(mp_2, "%0.2f \t", *(hostOutputMaxPooledData+i));
+           fprintf(mp_2, "%0.2f \t", *(host_maxpool_output+i));
          }
 
-  //  cudaFree(deviceOutputMaxPooledData);
+  //  cudaFree(device_maxpool_output);
     cudaFree(deviceOutputImageData_2_2);
 
-    //cudaFree(deviceInputMaxPool);
-    free(hostOutputMaxPooledData);
+    //cudaFree(device_maxpool_input);
+    free(host_maxpool_output);
 /*****************************max2 end*************************************************/
 
 /*****************************conv_3_1 start************************************************/
 // Layer parameters
-  imageWidth /= 2;
-  imageHeight /= 2;
+  width_image /= 2;
+  height_image /= 2;
 
   // Layer 4 (Convolution 128 -> 256)
   level = 4;
-  outputChannels = layers[level][0];
-  imageChannels = layers[level][1];
+  numberofOutputChannels = layers[level][0];
+  numberofImageChannels = layers[level][1];
 
 
   float * deviceOutputImageData_3_1;
 
-  hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-  float *hostOutputImageData1 = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
+  hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+  float *hostOutputImageData1 = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
 
-  err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+  err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
    if (err != cudaSuccess)
    {
-       fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+       fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
        exit(EXIT_FAILURE);
    }
 
 
-  err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+  err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
   if (err != cudaSuccess)
   {
-      fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+      fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
   }
 
- err = cudaMalloc((void **) &deviceOutputImageData_3_1, imageWidth * imageHeight *outputChannels* sizeof(float));
+ err = cudaMalloc((void **) &deviceOutputImageData_3_1, width_image * height_image *numberofOutputChannels* sizeof(float));
  if (err != cudaSuccess)
   {
       fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -1106,7 +1106,7 @@ int main()
   printf("Copy input data from the host memory to the CUDA device level 3_1\n");
 
   // Copy device bias
-  err = cudaMemcpy(deviceBias, bias,
+  err = cudaMemcpy(device_bias, bias,
                 sizeof(float)*layers[12][0],
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
@@ -1115,9 +1115,9 @@ int main()
         exit(EXIT_FAILURE);
     }
    // Copy device mask
-    err = cudaMemcpy(deviceMaskData,
+    err = cudaMemcpy(device_mask_weights,
                hostMaskData,
-               outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+               numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
                cudaMemcpyHostToDevice);
 
     if (err != cudaSuccess)
@@ -1126,13 +1126,13 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    dim3 dimGrid_3(((imageWidth-1)/TILE_WIDTH)+1, ((imageHeight-1)/TILE_WIDTH)+1,1);
+    dim3 dimGrid_3(((width_image-1)/TILE_WIDTH)+1, ((height_image-1)/TILE_WIDTH)+1,1);
     dim3 dimBlock_3(TILE_WIDTH, TILE_WIDTH, 1);
-    convolution<<<dimGrid_3,dimBlock_3>>>(deviceOutputMaxPooledData2, deviceMaskData, deviceOutputImageData_3_1, deviceBias,
-                                     imageChannels, imageWidth, imageHeight,outputChannels);
+    convolution<<<dimGrid_3,dimBlock_3>>>(deviceOutputMaxPooledData2, device_mask_weights, deviceOutputImageData_3_1, device_bias,
+                                     numberofImageChannels, width_image, height_image,numberofOutputChannels);
    err =   cudaMemcpy(hostOutputImageData1,
            deviceOutputImageData_3_1,
-           imageWidth * imageHeight * outputChannels * sizeof(float),
+           width_image * height_image * numberofOutputChannels * sizeof(float),
            cudaMemcpyDeviceToHost);
 
    if (err != cudaSuccess)
@@ -1147,9 +1147,9 @@ int main()
        printf("Error! opening device file");
    exit(1);
    }
-   for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+   for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
    {
-       if(i>0 && (i%imageWidth==0))
+       if(i>0 && (i%width_image==0))
        {
             fprintf(out3_1,"\n");
 
@@ -1165,9 +1165,9 @@ int main()
        printf("Error! opening device file");
    exit(1);
    }
-   for(int i=0;i<outputChannels*imageChannels*CONV_SIZE*CONV_SIZE;i++)
+   for(int i=0;i<numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE;i++)
    {
-       if(i>0 && (i%imageWidth==0))
+       if(i>0 && (i%width_image==0))
        {
             fprintf(level3_1,"\n");
 
@@ -1180,39 +1180,39 @@ int main()
 
    // Free conv_2_1 Memory
   //free(hostMaskData);
-   cudaFree(deviceMaskData);
+   cudaFree(device_mask_weights);
    free(hostOutputImageData1);
    cudaFree(deviceOutputMaxPooledData2);
-   cudaFree(deviceBias);
+   cudaFree(device_bias);
 // /*****************************conv_3_1 end************************************************/
 //
 // /****************************conv_3_2 start**********************************************/
 // Layer 4 (Convolution 128-> 128)
 level = 5;
-outputChannels = layers[level][0];
-imageChannels = layers[level][1];
+numberofOutputChannels = layers[level][0];
+numberofImageChannels = layers[level][1];
 
-hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
+host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
 float * deviceOutputImageData_3_2;
 
-hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-//hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
-err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+//host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
+err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
  if (err != cudaSuccess)
  {
-     fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+     fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
      exit(EXIT_FAILURE);
  }
 
 
-err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
-    fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+    fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
     exit(EXIT_FAILURE);
 }
 
-err = cudaMalloc((void **) &deviceOutputImageData_3_2, imageWidth * imageHeight *outputChannels* sizeof(float));
+err = cudaMalloc((void **) &deviceOutputImageData_3_2, width_image * height_image *numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
     fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -1222,7 +1222,7 @@ readWeights(level,hostMaskData, bias);
 
 printf("Copy input data from the host memory to the CUDA device level 3_2\n");
 // Copy device bias
-err = cudaMemcpy(deviceBias, bias,
+err = cudaMemcpy(device_bias, bias,
               sizeof(float)*layers[12][0],
              cudaMemcpyHostToDevice);
   if (err != cudaSuccess)
@@ -1231,9 +1231,9 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
  // Copy device mask
-  err = cudaMemcpy(deviceMaskData,
+  err = cudaMemcpy(device_mask_weights,
              hostMaskData,
-             outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+             numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
              cudaMemcpyHostToDevice);
 
   if (err != cudaSuccess)
@@ -1242,11 +1242,11 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
 
-convolution<<<dimGrid_3,dimBlock_3>>>(deviceOutputImageData_3_1, deviceMaskData, deviceOutputImageData_3_2, deviceBias,
-                                   imageChannels, imageWidth, imageHeight,outputChannels);
-cudaMemcpy(hostOutputImageData,
+convolution<<<dimGrid_3,dimBlock_3>>>(deviceOutputImageData_3_1, device_mask_weights, deviceOutputImageData_3_2, device_bias,
+                                   numberofImageChannels, width_image, height_image,numberofOutputChannels);
+cudaMemcpy(host_Image_output,
          deviceOutputImageData_3_2,
-         imageWidth * imageHeight * outputChannels * sizeof(float),
+         width_image * height_image * numberofOutputChannels * sizeof(float),
          cudaMemcpyDeviceToHost);
 cudaDeviceSynchronize();
  // Program exits if the file pointer returns NULL.
@@ -1255,14 +1255,14 @@ cudaDeviceSynchronize();
      printf("Error! opening device file");
  exit(1);
  }
- for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+ for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
  {
-     if(i>0 && (i%imageWidth==0))
+     if(i>0 && (i%width_image==0))
      {
           fprintf(out3_2,"\n");
 
      }
-   fprintf(out3_2, "%0.2f \t", *(hostOutputImageData+i));
+   fprintf(out3_2, "%0.2f \t", *(host_Image_output+i));
 
 
  }
@@ -1270,39 +1270,39 @@ cudaDeviceSynchronize();
 
  // Free conv_2_1 Memory
 free(hostMaskData);
- cudaFree(deviceMaskData);
- cudaFree(deviceBias);
-// free(hostOutputImageData);
+ cudaFree(device_mask_weights);
+ cudaFree(device_bias);
+// free(host_Image_output);
  cudaFree(deviceOutputImageData_3_1);
 /***************************conv_3_2 end************************************************/
 /***************************conv_3_3 start************************************************/
 // Layer 4 (Convolution 128-> 128)
 level = 6;
-outputChannels = layers[level][0];
-imageChannels = layers[level][1];
+numberofOutputChannels = layers[level][0];
+numberofImageChannels = layers[level][1];
 
 
 float * deviceOutputImageData_3_3;
 
-hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
+hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
 
-err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
  if (err != cudaSuccess)
  {
-     fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+     fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
      exit(EXIT_FAILURE);
  }
 
 
-err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
-    fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+    fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
     exit(EXIT_FAILURE);
 }
 
-err = cudaMalloc((void **) &deviceOutputImageData_3_3, imageWidth * imageHeight *outputChannels* sizeof(float));
+err = cudaMalloc((void **) &deviceOutputImageData_3_3, width_image * height_image *numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
     fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -1312,7 +1312,7 @@ readWeights(level,hostMaskData, bias);
 
 printf("Copy input data from the host memory to the CUDA device level 3_3\n");
 // Copy device bias
-err = cudaMemcpy(deviceBias, bias,
+err = cudaMemcpy(device_bias, bias,
               sizeof(float)*layers[12][0],
              cudaMemcpyHostToDevice);
   if (err != cudaSuccess)
@@ -1321,9 +1321,9 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
  // Copy device mask
-  err = cudaMemcpy(deviceMaskData,
+  err = cudaMemcpy(device_mask_weights,
              hostMaskData,
-             outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+             numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
              cudaMemcpyHostToDevice);
 
   if (err != cudaSuccess)
@@ -1332,11 +1332,11 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
 
-convolution<<<dimGrid_3,dimBlock_3>>>(deviceOutputImageData_3_2, deviceMaskData, deviceOutputImageData_3_3, deviceBias,
-                                   imageChannels, imageWidth, imageHeight,outputChannels);
-cudaMemcpy(hostOutputImageData,
+convolution<<<dimGrid_3,dimBlock_3>>>(deviceOutputImageData_3_2, device_mask_weights, deviceOutputImageData_3_3, device_bias,
+                                   numberofImageChannels, width_image, height_image,numberofOutputChannels);
+cudaMemcpy(host_Image_output,
          deviceOutputImageData_3_3,
-         imageWidth * imageHeight * outputChannels * sizeof(float),
+         width_image * height_image * numberofOutputChannels * sizeof(float),
          cudaMemcpyDeviceToHost);
 cudaDeviceSynchronize();
  // Program exits if the file pointer returns NULL.
@@ -1345,14 +1345,14 @@ cudaDeviceSynchronize();
      printf("Error! opening device file");
  exit(1);
  }
- for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+ for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
  {
-     if(i>0 && (i%imageWidth==0))
+     if(i>0 && (i%width_image==0))
      {
           fprintf(out3_3,"\n");
 
      }
-   fprintf(out3_3, "%0.2f \t", *(hostOutputImageData+i));
+   fprintf(out3_3, "%0.2f \t", *(host_Image_output+i));
 
 
  }
@@ -1360,36 +1360,36 @@ cudaDeviceSynchronize();
 
  // Free conv_2_1 Memory
 free(hostMaskData);
- cudaFree(deviceMaskData);
- cudaFree(deviceBias);
-free(hostOutputImageData);
+ cudaFree(device_mask_weights);
+ cudaFree(device_bias);
+free(host_Image_output);
  cudaFree(deviceOutputImageData_3_2);
 
 /***************************conv_3_3 end************************************************/
 
 /******************************max3 start**********************************************/
     float * deviceOutputMaxPooledData3;
-     hostOutputMaxPooledData = (float *) malloc(sizeof(float)*imageWidth/2*imageHeight/2*outputChannels);
-     err = cudaMalloc((void**) &deviceOutputMaxPooledData3, imageWidth/2 * imageHeight/2 * outputChannels * sizeof(float));
+     host_maxpool_output = (float *) malloc(sizeof(float)*width_image/2*height_image/2*numberofOutputChannels);
+     err = cudaMalloc((void**) &deviceOutputMaxPooledData3, width_image/2 * height_image/2 * numberofOutputChannels * sizeof(float));
      if (err != cudaSuccess)
      {
-         fprintf(stderr, "Failed to allocate deviceInputImageData (error code %s)!\n", cudaGetErrorString(err));
+         fprintf(stderr, "Failed to allocate device_image_input (error code %s)!\n", cudaGetErrorString(err));
          exit(EXIT_FAILURE);
      }
      // image 56
      blockwidth = 8;
-     number_blocks = imageWidth/blockwidth;
+     number_blocks = width_image/blockwidth;
      dim3 dimGrid_m3(number_blocks,number_blocks,1);
      dim3 dimBlock_m3(blockwidth,blockwidth,1);
 
-  maxpool<<<dimGrid_m3,dimBlock_m3>>>(deviceOutputImageData_3_3,deviceOutputMaxPooledData3 ,outputChannels, imageHeight, imageWidth, blockwidth);
+  maxpool<<<dimGrid_m3,dimBlock_m3>>>(deviceOutputImageData_3_3,deviceOutputMaxPooledData3 ,numberofOutputChannels, height_image, width_image, blockwidth);
 
 
   cudaDeviceSynchronize();
 
-  cudaMemcpy(hostOutputMaxPooledData,
+  cudaMemcpy(host_maxpool_output,
              deviceOutputMaxPooledData3,
-             imageWidth/2 * imageHeight/2 * outputChannels * sizeof(float),
+             width_image/2 * height_image/2 * numberofOutputChannels * sizeof(float),
              cudaMemcpyDeviceToHost);
 
      FILE *mp_3;
@@ -1401,52 +1401,52 @@ free(hostOutputImageData);
          exit(1);
      }
 
-      for(int i=0;i<imageWidth/2*imageHeight/2*outputChannels;i++)
+      for(int i=0;i<width_image/2*height_image/2*numberofOutputChannels;i++)
          {
-              if(i>0 && (i%(imageWidth/2 * outputChannels)==0))
+              if(i>0 && (i%(width_image/2 * numberofOutputChannels)==0))
                  fprintf(mp_3,"\n");
 
-           fprintf(mp_3, "%0.2f \t", *(hostOutputMaxPooledData+i));
+           fprintf(mp_3, "%0.2f \t", *(host_maxpool_output+i));
          }
 
-  //  cudaFree(deviceOutputMaxPooledData);
+  //  cudaFree(device_maxpool_output);
     cudaFree(deviceOutputImageData_3_3);
 
-  //  cudaFree(deviceInputMaxPool);
-    free(hostOutputMaxPooledData);
+  //  cudaFree(device_maxpool_input);
+    free(host_maxpool_output);
 /*****************************max3 end*************************************************/
 
 /*****************************conv_4_1 start************************************************/
 // Layer parameters
- imageWidth /= 2;
-  imageHeight /= 2;
+ width_image /= 2;
+  height_image /= 2;
 
   // Layer 4 (Convolution 128 -> 256)
   level = 7;
-  outputChannels = layers[level][0];
-  imageChannels = layers[level][1];
+  numberofOutputChannels = layers[level][0];
+  numberofImageChannels = layers[level][1];
 
 
   float * deviceOutputImageData_4_1;
 
-  hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-  hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
-  err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+  hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+  host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
+  err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
    if (err != cudaSuccess)
    {
-       fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+       fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
        exit(EXIT_FAILURE);
    }
 
 
-  err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+  err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
   if (err != cudaSuccess)
   {
-      fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+      fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
   }
 
- err = cudaMalloc((void **) &deviceOutputImageData_4_1, imageWidth * imageHeight *outputChannels* sizeof(float));
+ err = cudaMalloc((void **) &deviceOutputImageData_4_1, width_image * height_image *numberofOutputChannels* sizeof(float));
  if (err != cudaSuccess)
   {
       fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -1456,7 +1456,7 @@ free(hostOutputImageData);
 
   printf("Copy input data from the host memory to the CUDA device level 4_1\n");
   // Copy device bias
-  err = cudaMemcpy(deviceBias, bias,
+  err = cudaMemcpy(device_bias, bias,
                 sizeof(float)*layers[12][0],
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
@@ -1465,9 +1465,9 @@ free(hostOutputImageData);
         exit(EXIT_FAILURE);
     }
    // Copy device mask
-    err = cudaMemcpy(deviceMaskData,
+    err = cudaMemcpy(device_mask_weights,
                hostMaskData,
-               outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+               numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
                cudaMemcpyHostToDevice);
 
     if (err != cudaSuccess)
@@ -1476,13 +1476,13 @@ free(hostOutputImageData);
         exit(EXIT_FAILURE);
     }
 
-    dim3 dimGrid_4(((imageWidth-1)/TILE_WIDTH)+1, ((imageHeight-1)/TILE_WIDTH)+1,1);
+    dim3 dimGrid_4(((width_image-1)/TILE_WIDTH)+1, ((height_image-1)/TILE_WIDTH)+1,1);
     dim3 dimBlock_4(TILE_WIDTH, TILE_WIDTH, 1);
-    convolution<<<dimGrid_4,dimBlock_4>>>(deviceOutputMaxPooledData3, deviceMaskData, deviceOutputImageData_4_1, deviceBias,
-                                     imageChannels, imageWidth, imageHeight,outputChannels);
-   err =   cudaMemcpy(hostOutputImageData,
+    convolution<<<dimGrid_4,dimBlock_4>>>(deviceOutputMaxPooledData3, device_mask_weights, deviceOutputImageData_4_1, device_bias,
+                                     numberofImageChannels, width_image, height_image,numberofOutputChannels);
+   err =   cudaMemcpy(host_Image_output,
            deviceOutputImageData_4_1,
-           imageWidth * imageHeight * outputChannels * sizeof(float),
+           width_image * height_image * numberofOutputChannels * sizeof(float),
            cudaMemcpyDeviceToHost);
 
   if (err != cudaSuccess)
@@ -1497,9 +1497,9 @@ free(hostOutputImageData);
        printf("Error! opening device file");
    exit(1);
    }
-   for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+   for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
    {
-       if(i>0 && (i%imageWidth==0))
+       if(i>0 && (i%width_image==0))
        {
             fprintf(out4_1,"\n");
 
@@ -1516,9 +1516,9 @@ free(hostOutputImageData);
    exit(1);
  }
 
-   for(int i=0;i<outputChannels*imageChannels*CONV_SIZE*CONV_SIZE;i++)
+   for(int i=0;i<numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE;i++)
    {
-       if(i>0 && (i%imageWidth==0))
+       if(i>0 && (i%width_image==0))
        {
             fprintf(level4_1,"\n");
 
@@ -1531,40 +1531,40 @@ free(hostOutputImageData);
 
    // Free conv_2_1 Memory
   free(hostMaskData);
-   cudaFree(deviceMaskData);
-   cudaFree(deviceBias);
-   free(hostOutputImageData);
+   cudaFree(device_mask_weights);
+   cudaFree(device_bias);
+   free(host_Image_output);
    cudaFree(deviceOutputMaxPooledData3);
 /*****************************conv_4_1 end************************************************/
 
 /****************************conv_4_2 start**********************************************/
 // Layer 4 (Convolution 128-> 128)
 level = 8;
-outputChannels = layers[level][0];
-imageChannels = layers[level][1];
+numberofOutputChannels = layers[level][0];
+numberofImageChannels = layers[level][1];
 
 
 float * deviceOutputImageData_4_2;
-  hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
-hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-//hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels
+  host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
+hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+//host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels
 
-err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
  if (err != cudaSuccess)
  {
-     fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+     fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
      exit(EXIT_FAILURE);
  }
 
 
-err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
-    fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+    fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
     exit(EXIT_FAILURE);
 }
 
-err = cudaMalloc((void **) &deviceOutputImageData_4_2, imageWidth * imageHeight *outputChannels* sizeof(float));
+err = cudaMalloc((void **) &deviceOutputImageData_4_2, width_image * height_image *numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
     fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -1574,7 +1574,7 @@ readWeights(level,hostMaskData, bias);
 
 printf("Copy input data from the host memory to the CUDA device level 4_2\n");
 // Copy device bias
-err = cudaMemcpy(deviceBias, bias,
+err = cudaMemcpy(device_bias, bias,
               sizeof(float)*layers[12][0],
              cudaMemcpyHostToDevice);
   if (err != cudaSuccess)
@@ -1583,9 +1583,9 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
  // Copy device mask
-  err = cudaMemcpy(deviceMaskData,
+  err = cudaMemcpy(device_mask_weights,
              hostMaskData,
-             outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+             numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
              cudaMemcpyHostToDevice);
 
   if (err != cudaSuccess)
@@ -1594,11 +1594,11 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
 
-convolution<<<dimGrid_4,dimBlock_4>>>(deviceOutputImageData_4_1, deviceMaskData, deviceOutputImageData_4_2, deviceBias,
-                                   imageChannels, imageWidth, imageHeight,outputChannels);
-cudaMemcpy(hostOutputImageData,
+convolution<<<dimGrid_4,dimBlock_4>>>(deviceOutputImageData_4_1, device_mask_weights, deviceOutputImageData_4_2, device_bias,
+                                   numberofImageChannels, width_image, height_image,numberofOutputChannels);
+cudaMemcpy(host_Image_output,
          deviceOutputImageData_4_2,
-         imageWidth * imageHeight * outputChannels * sizeof(float),
+         width_image * height_image * numberofOutputChannels * sizeof(float),
          cudaMemcpyDeviceToHost);
 cudaDeviceSynchronize();
  // Program exits if the file pointer returns NULL.
@@ -1607,14 +1607,14 @@ cudaDeviceSynchronize();
      printf("Error! opening device file");
  exit(1);
  }
- for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+ for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
  {
-     if(i>0 && (i%imageWidth==0))
+     if(i>0 && (i%width_image==0))
      {
           fprintf(out4_2,"\n");
 
      }
-   fprintf(out4_2, "%0.2f \t", *(hostOutputImageData+i));
+   fprintf(out4_2, "%0.2f \t", *(host_Image_output+i));
 
 
  }
@@ -1622,41 +1622,41 @@ cudaDeviceSynchronize();
 
  // Free conv_2_1 Memory
 free(hostMaskData);
- cudaFree(deviceMaskData);
- cudaFree(deviceBias);
-free(hostOutputImageData);
+ cudaFree(device_mask_weights);
+ cudaFree(device_bias);
+free(host_Image_output);
  cudaFree(deviceOutputImageData_4_1);
 /***************************conv_4_2 end************************************************/
 
 /***************************conv_4_3 start************************************************/
 // Layer 4 (Convolution 128-> 128)
 level = 9;
-outputChannels = layers[level][0];
-imageChannels = layers[level][1];
+numberofOutputChannels = layers[level][0];
+numberofImageChannels = layers[level][1];
 
 
 float * deviceOutputImageData_4_3;
 
-hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
+hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
 
 
 
-err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
  if (err != cudaSuccess)
  {
-     fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+     fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
      exit(EXIT_FAILURE);
  }
 
-err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
-    fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+    fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
     exit(EXIT_FAILURE);
 }
 
-err = cudaMalloc((void **) &deviceOutputImageData_4_3, imageWidth * imageHeight *outputChannels* sizeof(float));
+err = cudaMalloc((void **) &deviceOutputImageData_4_3, width_image * height_image *numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
     fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -1666,7 +1666,7 @@ readWeights(level,hostMaskData, bias);
 
 printf("Copy input data from the host memory to the CUDA device level 4_3\n");
 // Copy device bias
-err = cudaMemcpy(deviceBias, bias,
+err = cudaMemcpy(device_bias, bias,
               sizeof(float)*layers[12][0],
              cudaMemcpyHostToDevice);
   if (err != cudaSuccess)
@@ -1675,9 +1675,9 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
  // Copy device mask
-  err = cudaMemcpy(deviceMaskData,
+  err = cudaMemcpy(device_mask_weights,
              hostMaskData,
-             outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+             numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
              cudaMemcpyHostToDevice);
 
   if (err != cudaSuccess)
@@ -1686,11 +1686,11 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
 
-convolution<<<dimGrid_4,dimBlock_4>>>(deviceOutputImageData_4_2, deviceMaskData, deviceOutputImageData_4_3, deviceBias,
-                                   imageChannels, imageWidth, imageHeight,outputChannels);
-cudaMemcpy(hostOutputImageData,
+convolution<<<dimGrid_4,dimBlock_4>>>(deviceOutputImageData_4_2, device_mask_weights, deviceOutputImageData_4_3, device_bias,
+                                   numberofImageChannels, width_image, height_image,numberofOutputChannels);
+cudaMemcpy(host_Image_output,
          deviceOutputImageData_4_3,
-         imageWidth * imageHeight * outputChannels * sizeof(float),
+         width_image * height_image * numberofOutputChannels * sizeof(float),
          cudaMemcpyDeviceToHost);
 cudaDeviceSynchronize();
  // Program exits if the file pointer returns NULL.
@@ -1699,14 +1699,14 @@ cudaDeviceSynchronize();
      printf("Error! opening device file");
  exit(1);
  }
- for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+ for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
  {
-     if(i>0 && (i%imageWidth==0))
+     if(i>0 && (i%width_image==0))
      {
           fprintf(out4_3,"\n");
 
      }
-   fprintf(out4_3, "%0.2f \t", *(hostOutputImageData+i));
+   fprintf(out4_3, "%0.2f \t", *(host_Image_output+i));
 
 
  }
@@ -1714,9 +1714,9 @@ cudaDeviceSynchronize();
 
  // Free conv_2_1 Memory
 free(hostMaskData);
- cudaFree(deviceMaskData);
- cudaFree(deviceBias);
-free(hostOutputImageData);
+ cudaFree(device_mask_weights);
+ cudaFree(device_bias);
+free(host_Image_output);
  cudaFree(deviceOutputImageData_4_2);
  //cudaFree(deviceOutputImageData_4_3);
 
@@ -1724,9 +1724,9 @@ free(hostOutputImageData);
 
 /******************************max4 start**********************************************/
     float * deviceOutputMaxPooledData4;
-     hostOutputMaxPooledData = (float *) malloc(sizeof(float)*imageWidth/2*imageHeight/2*outputChannels);
-     //err = cudaMalloc((void**) &deviceOutputMaxPooledData4, imageWidth/2 * imageHeight/2 * outputChannels * sizeof(float));
-     err = cudaMalloc((void**) &deviceOutputMaxPooledData4, imageWidth/2 * imageHeight/2 * outputChannels  * sizeof(float));
+     host_maxpool_output = (float *) malloc(sizeof(float)*width_image/2*height_image/2*numberofOutputChannels);
+     //err = cudaMalloc((void**) &deviceOutputMaxPooledData4, width_image/2 * height_image/2 * numberofOutputChannels * sizeof(float));
+     err = cudaMalloc((void**) &deviceOutputMaxPooledData4, width_image/2 * height_image/2 * numberofOutputChannels  * sizeof(float));
      if (err != cudaSuccess)
      {
          fprintf(stderr, "Failed to allocate deviceOutputMaxPooledData4 (error code %s)!\n", cudaGetErrorString(err));
@@ -1734,17 +1734,17 @@ free(hostOutputImageData);
      }
      // image 28
      blockwidth = 4;
-     number_blocks = imageWidth/blockwidth;
+     number_blocks = width_image/blockwidth;
      dim3 dimGrid_m4(number_blocks,number_blocks,1);
      dim3 dimBlock_m4(blockwidth,blockwidth,1);
-    maxpool<<<dimGrid_m4,dimBlock_m4>>>(deviceOutputImageData_4_3,deviceOutputMaxPooledData4 ,outputChannels, imageHeight, imageWidth, blockwidth);
+    maxpool<<<dimGrid_m4,dimBlock_m4>>>(deviceOutputImageData_4_3,deviceOutputMaxPooledData4 ,numberofOutputChannels, height_image, width_image, blockwidth);
 
 
   cudaDeviceSynchronize();
 
-  cudaMemcpy(hostOutputMaxPooledData,
+  cudaMemcpy(host_maxpool_output,
              deviceOutputMaxPooledData4,
-             imageWidth/2 * imageHeight/2 * outputChannels * sizeof(float),
+             width_image/2 * height_image/2 * numberofOutputChannels * sizeof(float),
              cudaMemcpyDeviceToHost);
 
      FILE *mp_4;
@@ -1756,51 +1756,51 @@ free(hostOutputImageData);
          exit(1);
      }
 
-      for(int i=0;i<imageWidth/2*imageHeight/2*outputChannels;i++)
+      for(int i=0;i<width_image/2*height_image/2*numberofOutputChannels;i++)
          {
-              if(i>0 && (i%(imageWidth/2 * outputChannels)==0))
+              if(i>0 && (i%(width_image/2 * numberofOutputChannels)==0))
                  fprintf(mp_4,"\n");
 
-           fprintf(mp_4, "%0.2f \t", *(hostOutputMaxPooledData+i));
+           fprintf(mp_4, "%0.2f \t", *(host_maxpool_output+i));
          }
   fclose(mp_4);
-  //  cudaFree(deviceOutputMaxPooledData);
+  //  cudaFree(device_maxpool_output);
     cudaFree(deviceOutputImageData_4_3);
 
-  //  cudaFree(deviceInputMaxPool);
-    free(hostOutputMaxPooledData);
+  //  cudaFree(device_maxpool_input);
+    free(host_maxpool_output);
 /*****************************max4 end*************************************************/
 /*****************************conv_5_1 start************************************************/
 // Layer parameters
- imageWidth /= 2;
-  imageHeight /= 2;
+ width_image /= 2;
+  height_image /= 2;
 
   // Layer 4 (Convolution 128 -> 256)
   level = 10;
-  outputChannels = layers[level][0];
-  imageChannels = layers[level][1];
+  numberofOutputChannels = layers[level][0];
+  numberofImageChannels = layers[level][1];
 
 
   float * deviceOutputImageData_5_1;
 
-  hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-  hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
-  err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+  hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+  host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
+  err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
    if (err != cudaSuccess)
    {
-       fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+       fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
        exit(EXIT_FAILURE);
    }
 
 
-  err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+  err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
   if (err != cudaSuccess)
   {
-      fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+      fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
   }
 
- err = cudaMalloc((void **) &deviceOutputImageData_5_1, imageWidth * imageHeight *outputChannels* sizeof(float));
+ err = cudaMalloc((void **) &deviceOutputImageData_5_1, width_image * height_image *numberofOutputChannels* sizeof(float));
  if (err != cudaSuccess)
   {
       fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -1810,7 +1810,7 @@ free(hostOutputImageData);
 
   printf("Copy input data from the host memory to the CUDA device level 5_1\n");
   // Copy device bias
-  err = cudaMemcpy(deviceBias, bias,
+  err = cudaMemcpy(device_bias, bias,
                 sizeof(float)*layers[12][0],
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
@@ -1819,9 +1819,9 @@ free(hostOutputImageData);
         exit(EXIT_FAILURE);
     }
    // Copy device mask
-    err = cudaMemcpy(deviceMaskData,
+    err = cudaMemcpy(device_mask_weights,
                hostMaskData,
-               outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+               numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
                cudaMemcpyHostToDevice);
 
     if (err != cudaSuccess)
@@ -1830,13 +1830,13 @@ free(hostOutputImageData);
         exit(EXIT_FAILURE);
     }
 
-    dim3 dimGrid_5(((imageWidth-1)/TILE_WIDTH)+1, ((imageHeight-1)/TILE_WIDTH)+1,1);
+    dim3 dimGrid_5(((width_image-1)/TILE_WIDTH)+1, ((height_image-1)/TILE_WIDTH)+1,1);
     dim3 dimBlock_5(TILE_WIDTH, TILE_WIDTH, 1);
-    convolution<<<dimGrid_5,dimBlock_5>>>(deviceOutputMaxPooledData4, deviceMaskData, deviceOutputImageData_5_1, deviceBias,
-                                     imageChannels, imageWidth, imageHeight,outputChannels);
-   err =   cudaMemcpy(hostOutputImageData,
+    convolution<<<dimGrid_5,dimBlock_5>>>(deviceOutputMaxPooledData4, device_mask_weights, deviceOutputImageData_5_1, device_bias,
+                                     numberofImageChannels, width_image, height_image,numberofOutputChannels);
+   err =   cudaMemcpy(host_Image_output,
            deviceOutputImageData_5_1,
-           imageWidth * imageHeight * outputChannels * sizeof(float),
+           width_image * height_image * numberofOutputChannels * sizeof(float),
            cudaMemcpyDeviceToHost);
 
   if (err != cudaSuccess)
@@ -1851,14 +1851,14 @@ free(hostOutputImageData);
        printf("Error! opening device file");
    exit(1);
    }
-   for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+   for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
    {
-       if(i>0 && (i%imageWidth==0))
+       if(i>0 && (i%width_image==0))
        {
             fprintf(out5_1,"\n");
 
        }
-     fprintf(out5_1, "%0.2f \t", *(hostOutputImageData+i));
+     fprintf(out5_1, "%0.2f \t", *(host_Image_output+i));
 
 
    }
@@ -1871,9 +1871,9 @@ free(hostOutputImageData);
    exit(1);
  }
 
-   for(int i=0;i<outputChannels*imageChannels*CONV_SIZE*CONV_SIZE;i++)
+   for(int i=0;i<numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE;i++)
    {
-       if(i>0 && (i%imageWidth==0))
+       if(i>0 && (i%width_image==0))
        {
             fprintf(level5_1,"\n");
 
@@ -1886,39 +1886,39 @@ free(hostOutputImageData);
 
    // Free conv_2_1 Memory
   free(hostMaskData);
-   cudaFree(deviceMaskData);
-   cudaFree(deviceBias);
-   free(hostOutputImageData);
+   cudaFree(device_mask_weights);
+   cudaFree(device_bias);
+   free(host_Image_output);
    cudaFree(deviceOutputMaxPooledData4);
 /*****************************conv_5_1 end************************************************/
 /****************************conv_5_2 start**********************************************/
 // Layer 4 (Convolution 128-> 128)
 level = 11;
-outputChannels = layers[level][0];
-imageChannels = layers[level][1];
+numberofOutputChannels = layers[level][0];
+numberofImageChannels = layers[level][1];
 
 
 float * deviceOutputImageData_5_2;
-  hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
-hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-//hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels
+  host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
+hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+//host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels
 
-err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
  if (err != cudaSuccess)
  {
-     fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+     fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
      exit(EXIT_FAILURE);
  }
 
 
-err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
-    fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+    fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
     exit(EXIT_FAILURE);
 }
 
-err = cudaMalloc((void **) &deviceOutputImageData_5_2, imageWidth * imageHeight *outputChannels* sizeof(float));
+err = cudaMalloc((void **) &deviceOutputImageData_5_2, width_image * height_image *numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
     fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -1928,7 +1928,7 @@ readWeights(level,hostMaskData, bias);
 
 printf("Copy input data from the host memory to the CUDA device level 5_2\n");
 // Copy device bias
-err = cudaMemcpy(deviceBias, bias,
+err = cudaMemcpy(device_bias, bias,
               sizeof(float)*layers[12][0],
              cudaMemcpyHostToDevice);
   if (err != cudaSuccess)
@@ -1937,9 +1937,9 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
  // Copy device mask
-  err = cudaMemcpy(deviceMaskData,
+  err = cudaMemcpy(device_mask_weights,
              hostMaskData,
-             outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+             numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
              cudaMemcpyHostToDevice);
 
   if (err != cudaSuccess)
@@ -1948,11 +1948,11 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
 
-convolution<<<dimGrid_5,dimBlock_5>>>(deviceOutputImageData_5_1, deviceMaskData, deviceOutputImageData_5_2, deviceBias,
-                                   imageChannels, imageWidth, imageHeight,outputChannels);
-cudaMemcpy(hostOutputImageData,
+convolution<<<dimGrid_5,dimBlock_5>>>(deviceOutputImageData_5_1, device_mask_weights, deviceOutputImageData_5_2, device_bias,
+                                   numberofImageChannels, width_image, height_image,numberofOutputChannels);
+cudaMemcpy(host_Image_output,
          deviceOutputImageData_5_2,
-         imageWidth * imageHeight * outputChannels * sizeof(float),
+         width_image * height_image * numberofOutputChannels * sizeof(float),
          cudaMemcpyDeviceToHost);
 cudaDeviceSynchronize();
  // Program exits if the file pointer returns NULL.
@@ -1961,14 +1961,14 @@ cudaDeviceSynchronize();
      printf("Error! opening device file");
  exit(1);
  }
- for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+ for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
  {
-     if(i>0 && (i%imageWidth==0))
+     if(i>0 && (i%width_image==0))
      {
           fprintf(out5_2,"\n");
 
      }
-   fprintf(out5_2, "%0.2f \t", *(hostOutputImageData+i));
+   fprintf(out5_2, "%0.2f \t", *(host_Image_output+i));
 
 
  }
@@ -1976,41 +1976,41 @@ cudaDeviceSynchronize();
 
  // Free conv_2_1 Memory
 free(hostMaskData);
- cudaFree(deviceMaskData);
- cudaFree(deviceBias);
-free(hostOutputImageData);
+ cudaFree(device_mask_weights);
+ cudaFree(device_bias);
+free(host_Image_output);
  cudaFree(deviceOutputImageData_5_1);
 /***************************conv_4_2 end************************************************/
 
 /***************************conv_4_3 start************************************************/
 // Layer 5 (Convolution 128-> 128)
 level = 12;
-outputChannels = layers[level][0];
-imageChannels = layers[level][1];
+numberofOutputChannels = layers[level][0];
+numberofImageChannels = layers[level][1];
 
 
 float * deviceOutputImageData_5_3;
 
-hostMaskData = (float *) malloc(sizeof(float)*outputChannels*imageChannels*CONV_SIZE*CONV_SIZE);
-hostOutputImageData = (float *) malloc(sizeof(float)*imageWidth*imageHeight*outputChannels);
+hostMaskData = (float *) malloc(sizeof(float)*numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE);
+host_Image_output = (float *) malloc(sizeof(float)*width_image*height_image*numberofOutputChannels);
 
 
 
-err = cudaMalloc((void**)&deviceBias, imageWidth * imageHeight * imageChannels * sizeof(float));
+err = cudaMalloc((void**)&device_bias, width_image * height_image * numberofImageChannels * sizeof(float));
  if (err != cudaSuccess)
  {
-     fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+     fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
      exit(EXIT_FAILURE);
  }
 
-err = cudaMalloc((void **) &deviceMaskData, maskRows * maskColumns * imageChannels*outputChannels* sizeof(float));
+err = cudaMalloc((void **) &device_mask_weights, mask_Rows * mask_cols * numberofImageChannels*numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
-    fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+    fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
     exit(EXIT_FAILURE);
 }
 
-err = cudaMalloc((void **) &deviceOutputImageData_5_3, imageWidth * imageHeight *outputChannels* sizeof(float));
+err = cudaMalloc((void **) &deviceOutputImageData_5_3, width_image * height_image *numberofOutputChannels* sizeof(float));
 if (err != cudaSuccess)
 {
     fprintf(stderr, "Failed to allocate deviceOutputImageData(error code %s)!\n", cudaGetErrorString(err));
@@ -2020,7 +2020,7 @@ readWeights(level,hostMaskData, bias);
 
 printf("Copy input data from the host memory to the CUDA device level 5_3\n");
 // Copy device bias
-err = cudaMemcpy(deviceBias, bias,
+err = cudaMemcpy(device_bias, bias,
               sizeof(float)*layers[12][0],
              cudaMemcpyHostToDevice);
   if (err != cudaSuccess)
@@ -2029,9 +2029,9 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
  // Copy device mask
-  err = cudaMemcpy(deviceMaskData,
+  err = cudaMemcpy(device_mask_weights,
              hostMaskData,
-             outputChannels*imageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
+             numberofOutputChannels*numberofImageChannels*CONV_SIZE*CONV_SIZE*sizeof(float),
              cudaMemcpyHostToDevice);
 
   if (err != cudaSuccess)
@@ -2040,11 +2040,11 @@ err = cudaMemcpy(deviceBias, bias,
       exit(EXIT_FAILURE);
   }
 
-convolution<<<dimGrid_5,dimBlock_5>>>(deviceOutputImageData_5_2, deviceMaskData, deviceOutputImageData_5_3, deviceBias,
-                                   imageChannels, imageWidth, imageHeight,outputChannels);
-cudaMemcpy(hostOutputImageData,
+convolution<<<dimGrid_5,dimBlock_5>>>(deviceOutputImageData_5_2, device_mask_weights, deviceOutputImageData_5_3, device_bias,
+                                   numberofImageChannels, width_image, height_image,numberofOutputChannels);
+cudaMemcpy(host_Image_output,
          deviceOutputImageData_5_3,
-         imageWidth * imageHeight * outputChannels * sizeof(float),
+         width_image * height_image * numberofOutputChannels * sizeof(float),
          cudaMemcpyDeviceToHost);
 cudaDeviceSynchronize();
  // Program exits if the file pointer returns NULL.
@@ -2053,14 +2053,14 @@ cudaDeviceSynchronize();
      printf("Error! opening device file");
  exit(1);
  }
- for(int i=0;i<imageWidth*imageHeight*outputChannels;i++)
+ for(int i=0;i<width_image*height_image*numberofOutputChannels;i++)
  {
-     if(i>0 && (i%imageWidth==0))
+     if(i>0 && (i%width_image==0))
      {
           fprintf(out5_3,"\n");
 
      }
-   fprintf(out5_3, "%0.2f \t", *(hostOutputImageData+i));
+   fprintf(out5_3, "%0.2f \t", *(host_Image_output+i));
 
 
  }
@@ -2068,18 +2068,18 @@ cudaDeviceSynchronize();
 
  // Free conv_2_1 Memory
 free(hostMaskData);
- cudaFree(deviceMaskData);
- cudaFree(deviceBias);
-free(hostOutputImageData);
+ cudaFree(device_mask_weights);
+ cudaFree(device_bias);
+free(host_Image_output);
  cudaFree(deviceOutputImageData_5_2);
 
 
 /***************************conv_5_3 end************************************************/
 /******************************max5 start**********************************************/
     float * deviceOutputMaxPooledData5;
-     hostOutputMaxPooledData = (float *) malloc(sizeof(float)*imageWidth/2*imageHeight/2*outputChannels);
-     //err = cudaMalloc((void**) &deviceOutputMaxPooledData4, imageWidth/2 * imageHeight/2 * outputChannels * sizeof(float));
-     err = cudaMalloc((void**) &deviceOutputMaxPooledData5, imageWidth/2 * imageHeight/2 * outputChannels  * sizeof(float));
+     host_maxpool_output = (float *) malloc(sizeof(float)*width_image/2*height_image/2*numberofOutputChannels);
+     //err = cudaMalloc((void**) &deviceOutputMaxPooledData4, width_image/2 * height_image/2 * numberofOutputChannels * sizeof(float));
+     err = cudaMalloc((void**) &deviceOutputMaxPooledData5, width_image/2 * height_image/2 * numberofOutputChannels  * sizeof(float));
      if (err != cudaSuccess)
      {
          fprintf(stderr, "Failed to allocate deviceOutputMaxPooledData5 (error code %s)!\n", cudaGetErrorString(err));
@@ -2087,17 +2087,17 @@ free(hostOutputImageData);
      }
      // image 28
      blockwidth = 2;
-     number_blocks = imageWidth/blockwidth;
+     number_blocks = width_image/blockwidth;
      dim3 dimGrid_m5(number_blocks,number_blocks,1);
      dim3 dimBlock_m5(blockwidth,blockwidth,1);
-    maxpool<<<dimGrid_m5,dimBlock_m5>>>(deviceOutputImageData_5_3,deviceOutputMaxPooledData5 ,outputChannels, imageHeight, imageWidth, blockwidth);
+    maxpool<<<dimGrid_m5,dimBlock_m5>>>(deviceOutputImageData_5_3,deviceOutputMaxPooledData5 ,numberofOutputChannels, height_image, width_image, blockwidth);
 
 
   cudaDeviceSynchronize();
 
-  cudaMemcpy(hostOutputMaxPooledData,
+  cudaMemcpy(host_maxpool_output,
              deviceOutputMaxPooledData4,
-             imageWidth/2 * imageHeight/2 * outputChannels * sizeof(float),
+             width_image/2 * height_image/2 * numberofOutputChannels * sizeof(float),
              cudaMemcpyDeviceToHost);
 
      FILE *mp_5;
@@ -2109,24 +2109,24 @@ free(hostOutputImageData);
          exit(1);
      }
 
-      for(int i=0;i<imageWidth/2*imageHeight/2*outputChannels;i++)
+      for(int i=0;i<width_image/2*height_image/2*numberofOutputChannels;i++)
          {
-              if(i>0 && (i%(imageWidth/2 * outputChannels)==0))
+              if(i>0 && (i%(width_image/2 * numberofOutputChannels)==0))
                  fprintf(mp_5,"\n");
 
-           fprintf(mp_5, "%0.2f \t", *(hostOutputMaxPooledData+i));
+           fprintf(mp_5, "%0.2f \t", *(host_maxpool_output+i));
          }
   fclose(mp_5);
-  //  cudaFree(deviceOutputMaxPooledData);
+  //  cudaFree(device_maxpool_output);
     cudaFree(deviceOutputImageData_5_3);
 
-  //  cudaFree(deviceInputMaxPool);
-    free(hostOutputMaxPooledData);
+  //  cudaFree(device_maxpool_input);
+    free(host_maxpool_output);
 /*****************************max5 end*************************************************/
 /*****************************dense_1_1 start************************************************/
 // Layer parameters
- imageWidth /= 2;
-  imageHeight /= 2;
+ width_image /= 2;
+  height_image /= 2;
 
   // Layer 4 (Convolution 128 -> 256)
   level = 0;
@@ -2137,19 +2137,19 @@ free(hostOutputImageData);
   float * deviceOutputImageDataDense_1_1;
 
   //hostMaskData = (float *) malloc(sizeof(float)*output*input);
-  hostOutputImageData = (float *) malloc(sizeof(float)*output);
-  err = cudaMalloc((void**)&deviceBias, output * sizeof(float));
+  host_Image_output = (float *) malloc(sizeof(float)*output);
+  err = cudaMalloc((void**)&device_bias, output * sizeof(float));
    if (err != cudaSuccess)
    {
-       fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+       fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
        exit(EXIT_FAILURE);
    }
 
 
-  err = cudaMalloc((void **) &deviceMaskData, output*input*sizeof(float));
+  err = cudaMalloc((void **) &device_mask_weights, output*input*sizeof(float));
   if (err != cudaSuccess)
   {
-      fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+      fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
   }
 
@@ -2163,7 +2163,7 @@ free(hostOutputImageData);
 
   printf("Copy input data from the host memory to the CUDA device level FC 1_1\n");
   // Copy device bias
-  err = cudaMemcpy(deviceBias, bias_1,
+  err = cudaMemcpy(device_bias, bias_1,
                 sizeof(float)*dense[0][1],
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
@@ -2173,7 +2173,7 @@ free(hostOutputImageData);
     }
    // Copy device mask
 
-    err = cudaMemcpy(deviceMaskData,
+    err = cudaMemcpy(device_mask_weights,
                dense_1,
                output*input*sizeof(float),
                cudaMemcpyHostToDevice);
@@ -2185,14 +2185,14 @@ free(hostOutputImageData);
     }
 
     dim3 dimGrid_fc1_1(1,1,1);
-    dim3 dimBlock_fc1_1(imageWidth, imageWidth, 1);
-  //  fully1(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels)
-//  __global__ void fully1(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels)
-//int channels, int width, int height,int outputChannels)
+    dim3 dimBlock_fc1_1(width_image, width_image, 1);
+  //  fully1(float *I, const float* __restrict__ M, float *P,int channels,int numberofOutputChannels)
+//  __global__ void fully1(float *I, const float* __restrict__ M, float *P,int channels,int numberofOutputChannels)
+//int channels, int width, int height,int numberofOutputChannels)
 
-  fully1<<<dimGrid_fc1_1,dimBlock_fc1_1>>>(deviceOutputMaxPooledData5, deviceMaskData, deviceOutputImageDataDense_1_1,
-                                   512,output,deviceBias);
-   err =   cudaMemcpy(hostOutputImageData,
+  fully1<<<dimGrid_fc1_1,dimBlock_fc1_1>>>(deviceOutputMaxPooledData5, device_mask_weights, deviceOutputImageDataDense_1_1,
+                                   512,output,device_bias);
+   err =   cudaMemcpy(host_Image_output,
            deviceOutputImageDataDense_1_1,
            output* sizeof(float),
            cudaMemcpyDeviceToHost);
@@ -2212,7 +2212,7 @@ free(hostOutputImageData);
    for(int i=0;i<output;i++)
    {
 
-     fprintf(outf1_1, "%0.2f \t", *(hostOutputImageData+i));
+     fprintf(outf1_1, "%0.2f \t", *(host_Image_output+i));
 
 
    }
@@ -2237,9 +2237,9 @@ free(hostOutputImageData);
 
    // Free conv_2_1 Memory
 //  free(hostMaskData);
-   cudaFree(deviceMaskData);
-   cudaFree(deviceBias);
-   free(hostOutputImageData);
+   cudaFree(device_mask_weights);
+   cudaFree(device_bias);
+   free(host_Image_output);
    cudaFree(deviceOutputMaxPooledData5);
 /*****************************conv_5_1 end************************************************/
 /*****************************dense_1_2 start************************************************/
@@ -2254,19 +2254,19 @@ free(hostOutputImageData);
   float * deviceOutputImageDataDense_1_2;
 
 //  hostMaskData = (float *) malloc(sizeof(float)*output*input);
-  hostOutputImageData = (float *) malloc(sizeof(float)*output);
-  err = cudaMalloc((void**)&deviceBias, output * sizeof(float));
+  host_Image_output = (float *) malloc(sizeof(float)*output);
+  err = cudaMalloc((void**)&device_bias, output * sizeof(float));
    if (err != cudaSuccess)
    {
-       fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+       fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
        exit(EXIT_FAILURE);
    }
 
 
-  err = cudaMalloc((void **) &deviceMaskData, output*input*sizeof(float));
+  err = cudaMalloc((void **) &device_mask_weights, output*input*sizeof(float));
   if (err != cudaSuccess)
   {
-      fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+      fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
   }
 
@@ -2280,7 +2280,7 @@ free(hostOutputImageData);
 
   printf("Copy input data from the host memory to the CUDA device level FC 1_2\n");
   // Copy device bias
-  err = cudaMemcpy(deviceBias, bias_2,
+  err = cudaMemcpy(device_bias, bias_2,
                 sizeof(float)*dense[1][1],
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
@@ -2289,7 +2289,7 @@ free(hostOutputImageData);
         exit(EXIT_FAILURE);
     }
    // Copy device mask
-    err = cudaMemcpy(deviceMaskData,
+    err = cudaMemcpy(device_mask_weights,
                dense_2,
                output*input*sizeof(float),
                cudaMemcpyHostToDevice);
@@ -2302,10 +2302,10 @@ free(hostOutputImageData);
 
     dim3 dimGrid_fc1_2(1,1,1);
     dim3 dimBlock_fc1_2(32, 32, 1);
-  //  fully1(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels)
-    fully2<<<dimGrid_fc1_2,dimBlock_fc1_2>>>(deviceOutputImageDataDense_1_1, deviceMaskData, deviceOutputImageDataDense_1_2,
-                                   4096,output, deviceBias);
-   err =   cudaMemcpy(hostOutputImageData,
+  //  fully1(float *I, const float* __restrict__ M, float *P,int channels,int numberofOutputChannels)
+    fully2<<<dimGrid_fc1_2,dimBlock_fc1_2>>>(deviceOutputImageDataDense_1_1, device_mask_weights, deviceOutputImageDataDense_1_2,
+                                   4096,output, device_bias);
+   err =   cudaMemcpy(host_Image_output,
            deviceOutputImageDataDense_1_2,
            output* sizeof(float),
            cudaMemcpyDeviceToHost);
@@ -2325,7 +2325,7 @@ free(hostOutputImageData);
    for(int i=0;i<output;i++)
    {
 
-     fprintf(outf1_2, "%0.2f \t", *(hostOutputImageData+i));
+     fprintf(outf1_2, "%0.2f \t", *(host_Image_output+i));
 
 
    }
@@ -2356,9 +2356,9 @@ free(hostOutputImageData);
 
    // Free conv_2_1 Memory
 //  free(hostMaskData);
-   cudaFree(deviceMaskData);
-   cudaFree(deviceBias);
-   free(hostOutputImageData);
+   cudaFree(device_mask_weights);
+   cudaFree(device_bias);
+   free(host_Image_output);
    cudaFree(deviceOutputImageDataDense_1_1);
 /*****************************conv_5_1 end************************************************/
 
@@ -2374,19 +2374,19 @@ free(hostOutputImageData);
   float * deviceOutputImageDataDense_1_3;
 
   hostMaskData = (float *) malloc(sizeof(float)*output*input);
-  hostOutputImageData = (float *) malloc(sizeof(float)*output);
-  err = cudaMalloc((void**)&deviceBias, output * sizeof(float));
+  host_Image_output = (float *) malloc(sizeof(float)*output);
+  err = cudaMalloc((void**)&device_bias, output * sizeof(float));
    if (err != cudaSuccess)
    {
-       fprintf(stderr, "Failed to allocate deviceBias (error code %s)!\n", cudaGetErrorString(err));
+       fprintf(stderr, "Failed to allocate device_bias (error code %s)!\n", cudaGetErrorString(err));
        exit(EXIT_FAILURE);
    }
 
 
-  err = cudaMalloc((void **) &deviceMaskData, output*input*sizeof(float));
+  err = cudaMalloc((void **) &device_mask_weights, output*input*sizeof(float));
   if (err != cudaSuccess)
   {
-      fprintf(stderr, "Failed to allocate deviceMaskData(error code %s)!\n", cudaGetErrorString(err));
+      fprintf(stderr, "Failed to allocate device_mask_weights(error code %s)!\n", cudaGetErrorString(err));
       exit(EXIT_FAILURE);
   }
 
@@ -2400,7 +2400,7 @@ free(hostOutputImageData);
 
   printf("Copy input data from the host memory to the CUDA device level FC 1_3\n");
   // Copy device bias
-  err = cudaMemcpy(deviceBias, bias_3,
+  err = cudaMemcpy(device_bias, bias_3,
                 sizeof(float)*dense[2][1],
                cudaMemcpyHostToDevice);
     if (err != cudaSuccess)
@@ -2410,7 +2410,7 @@ free(hostOutputImageData);
     }
    // Copy device mask
 
-    err = cudaMemcpy(deviceMaskData,
+    err = cudaMemcpy(device_mask_weights,
                dense_3,
                output*input*sizeof(float),
                cudaMemcpyHostToDevice);
@@ -2423,12 +2423,12 @@ free(hostOutputImageData);
 
     dim3 dimGrid_fc1_3(1,1,1);
     dim3 dimBlock_fc1_3(32, 32, 1);
-  //  fully1(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels)
-    fully3<<<dimGrid_fc1_3,dimBlock_fc1_3>>>(deviceOutputImageDataDense_1_2, deviceMaskData, deviceOutputImageDataDense_1_3,
-                                   4096,output,deviceBias);
+  //  fully1(float *I, const float* __restrict__ M, float *P,int channels,int numberofOutputChannels)
+    fully3<<<dimGrid_fc1_3,dimBlock_fc1_3>>>(deviceOutputImageDataDense_1_2, device_mask_weights, deviceOutputImageDataDense_1_3,
+                                   4096,output,device_bias);
 
 
-   err =   cudaMemcpy(hostOutputImageData,
+   err =   cudaMemcpy(host_Image_output,
            deviceOutputImageDataDense_1_3,
            output* sizeof(float),
            cudaMemcpyDeviceToHost);
@@ -2448,7 +2448,7 @@ free(hostOutputImageData);
    for(int i=0;i<output;i++)
    {
 
-     fprintf(outf1_3, "%0.2f \t", *(hostOutputImageData+i));
+     fprintf(outf1_3, "%0.2f \t", *(host_Image_output+i));
 
 
    }
@@ -2456,7 +2456,7 @@ free(hostOutputImageData);
    fclose(outf1_3);
 
 
-  softmax(hostOutputImageData, 1000);
+  softmax(host_Image_output, 1000);
 
   FILE *soft;
   if ((soft = fopen("softmax.txt","w")) == NULL){
@@ -2468,22 +2468,22 @@ free(hostOutputImageData);
   for(int i=0;i<1000;i++)
   {
 
-    if(*(hostOutputImageData+i) > max)
+    if(*(host_Image_output+i) > max)
     {
-      max = *(hostOutputImageData+i);
+      max = *(host_Image_output+i);
       j =i;
     }
-//    fprintf(soft, "%0.5f \t", *(hostOutputImageData+i));
+//    fprintf(soft, "%0.5f \t", *(host_Image_output+i));
   }
-  fprintf(soft, "class:%d at:%d \n", max,j);
+  fprintf(soft, "accuracy:%f class:%d \n", max,j);
   fclose(soft);
 
 
   // Free conv_2_1 Memory
  free(hostMaskData);
-  cudaFree(deviceMaskData);
-  cudaFree(deviceBias);
-  free(hostOutputImageData);
+  cudaFree(device_mask_weights);
+  cudaFree(device_bias);
+  free(host_Image_output);
   cudaFree(deviceOutputImageDataDense_1_2);
   cudaFree(deviceOutputImageDataDense_1_3);
   free(dense_1);
@@ -2498,8 +2498,7 @@ free(hostOutputImageData);
 
 
   printf("\n Number of Threads Per Block created in code: %d",TILE_WIDTH*TILE_WIDTH);
-  printf("\n Number of Blocks Created :%d",(((imageWidth-1)/TILE_WIDTH)+1)*(((imageWidth-1)/TILE_WIDTH)+1));
+  printf("\n Number of Blocks Created :%d",(((width_image-1)/TILE_WIDTH)+1)*(((width_image-1)/TILE_WIDTH)+1));
   printf("No Error");
   return 0;
 }
-

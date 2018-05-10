@@ -1,3 +1,4 @@
+#define INPUT_CHANNELS 3
 #define  CONV_SIZE        3
 int layers[13][4] = {
 	{ 64, 3, CONV_SIZE, CONV_SIZE },
@@ -23,4 +24,3 @@ int dense[3][2] = {
 
 #define MASK_WIDTH 3
 #define TILE_SIZE_1 32
-
