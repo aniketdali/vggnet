@@ -8,12 +8,12 @@ The project implements VGGnet 16 for object classification in CUDA framwork. The
 The Project refers the source code and the python scripts (keras_weights_converter.py) and (image_to_text_converter.py) provided by github user ZFTurbo https://github.com/ZFTurbo/VGG16-Pretrained-C and the inputs provided by professor Hyeran Jeon.
 
 # FileStructure
-1.weights.txt 
-2.image.txt
-3.base.cu -source code file for vggnet16
-4.base.h  -header file for vgggnet165
-5.image_to_text_converter.py
-6.keras_weights_converter.py
+1. weights.txt 
+2. image.txt
+3. base.cu -source code file for vggnet16
+4. base.h  -header file for vgggnet165
+5. image_to_text_converter.py
+6. keras_weights_converter.py
 
 # Download
 Weights (~800MB Compressed 7z): https://mega.nz/#!LIhjXRhQ!scgNodAkfwWIUZdTcRfmKNHjtUfUb2KiIvfvXdIe-vc
