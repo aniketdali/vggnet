@@ -19,8 +19,8 @@
 #define Mask_radius_x Mask_width/2
 #define Mask_radius_y Mask_height/2
 #define TILE_WIDTH 32 //16 X 16 TILE
-#define w_x (TILE_WIDTH + Mask_width - 1) //Shared Memory Elements needed to load as per Mask Size
-#define w_y (TILE_WIDTH + Mask_height - 1)
+#define B_x (TILE_WIDTH + Mask_width - 1)
+#define B_y (TILE_WIDTH + Mask_height - 1)
 #define clamp(x) (max(max((x), 0.0),x))
 #define SIZE 224
 #define max4(w,x,y,z) max(max(max(w,x),y),z)
@@ -75,9 +75,9 @@ __global__ void fully_connected(float *I, const float* __restrict__ M, float *P,
      {
 
       F_ds[threadIdx.x][threadIdx.y] = I[(threadIdx.x + (blockIdx.x * TILE_WIDTH)) * (width * channels) + threadIdx.y * channels + k + blockIdx.y * (TILE_WIDTH) ];
-      //W_ds[threadIdx.x][threadIdx.y] = M[(threadIdx.x + (blockIdx.x * TILE_WIDTH)) * (width * channels) + threadIdx.y * channels + k + blockIdx.y * (TILE_WIDTH) ];
+
         __syncthreads();
-       //printf("matrix %0.2f",accum);
+
         int y, x,z;
         if(threadIdx.y == 0 && threadIdx.x ==0 &&blockIdx.y == 0 && blockIdx.x == 0)
         {
@@ -296,35 +296,13 @@ __global__ void maxpool(float *image, float * output,int number_of_channels, int
 	for( int curr_channel=0; curr_channel<number_of_channels; curr_channel++)
 	{
 
-
-  //  Ns[threadIdx.x][threadIdx.y] = image[(threadIdx.x + (blockIdx.x * TILE_WIDTH)) * (image_width * number_of_channels) + threadIdx.y * number_of_channels + curr_channel + blockIdx.y * (TILE_WIDTH) ];
-
     Ns[threadIdx.x][threadIdx.y] = image[(threadIdx.y*number_of_channels +curr_channel +blockIdx.y * (blockwidth*number_of_channels)) + (threadIdx.x + blockIdx.x*blockwidth)* (image_width *number_of_channels) ];
 
     __syncthreads();
-    // if((threadIdx.x == 0) && (threadIdx.y == 0) && (blockIdx.x ==0) && (blockIdx.y ==0) && curr_channel == 0)
-    // {
-    // // printf("\n share is:%.2f\n",Ns[threadIdx.x][threadIdx.y]);
-    // // printf("\n share is:%.2f\n",Ns[threadIdx.x][threadIdx.y+1]);
-    // // printf("\n share is:%.2f\n",Ns[threadIdx.x+1][threadIdx.y]);
-    // // printf("\n share is:%.2f\n",Ns[threadIdx.x+1][threadIdx.y+1]);
-    // // printf("\n thats it\n");
-    // //     printf("Bx:%d,By:%d,x:%d,y:%d,%0.2f, %0.2f, %0.2f, %0.2f, max: %0.2f \n",blockIdx.x,blockIdx.y,threadIdx.x,threadIdx.y,Ns[threadIdx.x][threadIdx.y],Ns[threadIdx.x][threadIdx.y+1],Ns[threadIdx.x+1][threadIdx.y],Ns[threadIdx.x+1][threadIdx.y+1],max4(Ns[threadIdx.x][threadIdx.y],Ns[threadIdx.x][threadIdx.y+1],Ns[threadIdx.x+1][threadIdx.y],Ns[threadIdx.x+1][threadIdx.y+1]) );
-    // }
+
     if((threadIdx.x % 2 == 0) && (threadIdx.y %2 == 0))
     {
-      //printf("\n share is:%.2f\n",Ns[threadIdx.x][threadIdx.y]);
-    //printf("Bx:%d,By:%d,x:%d,y:%d,%0.2f, %0.2f, %0.2f, %0.2f, max: %0.2f \n",blockIdx.x,blockIdx.y,threadIdx.x,threadIdx.y,Ns[threadIdx.x][threadIdx.y],Ns[threadIdx.x][threadIdx.y+1],Ns[threadIdx.x+1][threadIdx.y],Ns[threadIdx.x+1][threadIdx.y+1],max4(Ns[threadIdx.x][threadIdx.y],Ns[threadIdx.x][threadIdx.y+1],Ns[threadIdx.x+1][threadIdx.y],Ns[threadIdx.x+1][threadIdx.y+1]) );
-//output[blockIdx.y*(TILE_WIDTH/2) *number_of_channels+ (threadIdx.y/2) *number_of_channels+ curr_channel + (blockIdx.x * TILE_WIDTH +threadIdx.x) * (image_width/TILE_WIDTH)*(TILE_WIDTH/2)*number_of_channels/2] = max4(Ns[threadIdx.x][threadIdx.y],Ns[threadIdx.x][threadIdx.y+1],
-output[blockIdx.y*(blockwidth/2) *number_of_channels+ (threadIdx.y/2) *number_of_channels+ curr_channel + (blockIdx.x * blockwidth/2 +threadIdx.x/2) * (image_width/2)*number_of_channels] = max4(Ns[threadIdx.x][threadIdx.y],Ns[threadIdx.x][threadIdx.y+1],Ns[threadIdx.x+1][threadIdx.y],Ns[threadIdx.x+1][threadIdx.y+1]) ;
-
-
-/*  if((threadIdx.x == 0) && (threadIdx.y == 0) && (blockIdx.x ==0) && (blockIdx.y ==0))
-  {
-    for(int i =0; i<10; i++)
-            printf("\nmax_device out is:%.2f\n",output[i]);
-   }*/
-
+      output[blockIdx.y*(blockwidth/2) *number_of_channels+ (threadIdx.y/2) *number_of_channels+ curr_channel + (blockIdx.x * blockwidth/2 +threadIdx.x/2) * (image_width/2)*number_of_channels] = max4(Ns[threadIdx.x][threadIdx.y],Ns[threadIdx.x][threadIdx.y+1],Ns[threadIdx.x+1][threadIdx.y],Ns[threadIdx.x+1][threadIdx.y+1]);
     }
   }
 }
@@ -332,19 +310,15 @@ output[blockIdx.y*(blockwidth/2) *number_of_channels+ (threadIdx.y/2) *number_of
 __global__ void fully1(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels,float *b)
 {
    __shared__ float F_ds[7][7];
-   //__shared__ float W_ds[f_y][f_x];
-   //float acc[5] ={0};
+
    float acc[4096] ={0};
 
      for (int current_channel = 0; current_channel < channels; current_channel++)
      {
 
-    //  F_ds[threadIdx.x][threadIdx.y] = I[(threadIdx.x + (blockIdx.x * TILE_WIDTH)) * (width * channels) + threadIdx.y * channels + k + blockIdx.y * (TILE_WIDTH) ];
          F_ds[threadIdx.x][threadIdx.y] = I[(threadIdx.x + (blockIdx.x * TILE_WIDTH)) * (7 * channels) + threadIdx.y * channels + current_channel + blockIdx.y * (TILE_WIDTH) ]; //
-    //  F_ds[threadIdx.x][threadIdx.y] = I[threadIdx.y*512+current_channel+threadIdx.x*7*512];
-      //W_ds[threadIdx.x][threadIdx.y] = M[(threadIdx.x + (blockIdx.x * TILE_WIDTH)) * (width * channels) + threadIdx.y * channels + k + blockIdx.y * (TILE_WIDTH) ];
         __syncthreads();
-       //printf("matrix %0.2f",accum);
+
         int y, x,z;
         if(threadIdx.y == 0 && threadIdx.x ==0)
         {
@@ -355,28 +329,19 @@ __global__ void fully1(float *I, const float* __restrict__ M, float *P,int chann
               {
                 for(int j =0; j<7; j++)
                 {
-                //       printf("%.2f ",F_ds[i][j]);
-
-                //    acc[z] += F_ds[i][j] * M[i*TILE_WIDTH + TILE_WIDTH*TILE_WIDTH*z+ outputChannels*k*TILE_WIDTH*TILE_WIDTH+ j];
-                                              //col * 4096 + outputChannels + row * 7 * 4096 + channel (row in mask index) * (7*7*4096 -> total elements in mask matrix column)
-                  //    acc[z] += F_ds[i][j] * M[j*outputChannels+outputChannels+(i*7)*outputChannels + current_channel * 7 * 7 * outputChannels];
                    acc[z] += F_ds[i][j] * M[z*7*7*512 + current_channel*7*7 +i*7+j];
                 }
+            }
 
-                //printf("\n");
-              }
-            //  printf("done for z:%d and k:%d\n",z,k);
           }
        }
-       //__syncthreads();
-       //printf("done\n");
 
    }
    if(threadIdx.y == 0 && threadIdx.x ==0)
    {
      for(int z =0;z<outputChannels;z++)
      {
-        //printf("%.2f\t",acc[z]);
+
         P[z] = acc[z] +b[z];
      }
 
@@ -386,9 +351,7 @@ __global__ void fully1(float *I, const float* __restrict__ M, float *P,int chann
 __global__ void fully2(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels,float *b)
 {
    __shared__ float F_ds[4][32][32];
-   //__shared__ float W_ds[f_y][f_x];
 
-   //float acc[5] ={0};
    float acc[4096] ={0};
 
     for(int i=0;i<4;i++)
@@ -401,27 +364,9 @@ __global__ void fully2(float *I, const float* __restrict__ M, float *P,int chann
      if(threadIdx.y == 0 && threadIdx.x ==0)
      {
         int i,j,k;
-        //  for (int current_channel = 0; current_channel < channels; current_channel++)
-        //  {
-        //    i=current_channel/1024;
-        //    j=(current_channel-i*32)/32;
-        //    K=current_channel%32;
-        //
-        // //  F_ds[threadIdx.x][threadIdx.y] = I[(threadIdx.x + (blockIdx.x * TILE_WIDTH)) * (width * channels) + threadIdx.y * channels + k + blockIdx.y * (TILE_WIDTH) ];
-        //
-        //         for(int z =0;z<outputChannels;z++)
-        //         {
-        //
-        //           a[current_channel]+=F_ds[i][j][k]*M[z*outputChannels+current_channel];
-        //
-        //         }
-        //   }
 
           for (int current_op_channel = 0; current_op_channel < outputChannels; current_op_channel++)
           {
-
-
-         //  F_ds[threadIdx.x][threadIdx.y] = I[(threadIdx.x + (blockIdx.x * TILE_WIDTH)) * (width * channels) + threadIdx.y * channels + k + blockIdx.y * (TILE_WIDTH) ];
 
                  for(int current_channel =0; current_channel<channels;current_channel++)
                  {
@@ -434,8 +379,7 @@ __global__ void fully2(float *I, const float* __restrict__ M, float *P,int chann
 
          for(int z =0;z<outputChannels;z++)
          {
-            //printf("%.2f\t",acc[z]);
-            P[z] = clamp(acc[z] + b[z]);
+              P[z] = clamp(acc[z] + b[z]);
          }
 
       }
@@ -444,9 +388,7 @@ __global__ void fully2(float *I, const float* __restrict__ M, float *P,int chann
 __global__ void fully3(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels,float *b)
 {
    __shared__ float F_ds[4][32][32];
-   //__shared__ float W_ds[f_y][f_x];
 
-   //float acc[5] ={0};
    float acc[1000] ={0};
 
     for(int i=0;i<4;i++)
@@ -462,9 +404,6 @@ __global__ void fully3(float *I, const float* __restrict__ M, float *P,int chann
          for (int current_op_channel = 0; current_op_channel < outputChannels; current_op_channel++)
          {
 
-
-        //  F_ds[threadIdx.x][threadIdx.y] = I[(threadIdx.x + (blockIdx.x * TILE_WIDTH)) * (width * channels) + threadIdx.y * channels + k + blockIdx.y * (TILE_WIDTH) ];
-
                 for(int current_channel =0; current_channel<channels;current_channel++)
                 {
                   i=current_channel/1024;
@@ -478,84 +417,73 @@ __global__ void fully3(float *I, const float* __restrict__ M, float *P,int chann
 
          for(int z =0;z<outputChannels;z++)
          {
-            //printf("%.2f\t",acc[z]);
-            P[z] = clamp(acc[z] + b[z]);
+                       P[z] = clamp(acc[z] + b[z]);
          }
 
       }
 }
 
-
-//@@ INSERT CODE HERE
+// in first go, all of the threads will load the image pixels TILE_WIDTH * TILE_WIDTH on the second go first (TILE_WIDTH-mask radius)^2 threads will load the image.
 __global__ void convolution(float *I, const float* __restrict__ M, float *P, float *b,int channels, int width, int height,int outputChannels)
 {
-   __shared__ float N_ds[w_y][w_x];
-   int k;
+   __shared__ float N_ds[B_y][B_x];
+   int k;int dest_Y;int dest_X;int src_X; int src_Y;int src;
 
    float accum[out] = {0};
-//   const int size = outputChannels;
-  // float * accum = (float*)malloc(sizeof(float) * size);
-   //float accum[size] = {0};
-   for (k = 0; k < channels; k++)
+
+   // for all the image channels
+   for (current_channel = 0; current_channel < channels; current_channel++)
    {
-      //1. Phase to Load Data into Shared Memory. Each Thread loads multiple elements indexed by each Batch loading
-    //1.dest: RMO ID 2. destY & destX: Row and Column of Shared Memory
-    //3. srcY & srcX: Indexes to fetch data from input Image
-    //4. src: RMO index of Input Image
 
-    // First batch loading
-      int dest = threadIdx.y * TILE_WIDTH + threadIdx.x,
-         destY = dest / w_x, destX = dest % w_x,
-         srcY = blockIdx.y * TILE_WIDTH + destY - Mask_radius_x,
-         srcX = blockIdx.x * TILE_WIDTH + destX - Mask_radius_y,
-         src = (srcY * width + srcX) * channels + k;
-      if (srcY >= 0 && srcY < height && srcX >= 0 && srcX < width)
-         N_ds[destY][destX] = I[src];
+
+       dest = threadIdx.y * TILE_WIDTH + threadIdx.x,
+      // The new index of thread in matrix with the boundary
+      dest_Y = dest / B_x,
+      dest_X = dest % B_x,
+
+      src_Y = blockIdx.y * TILE_WIDTH + dest_Y - Mask_radius_x,
+      src_X = blockIdx.x * TILE_WIDTH + dest_X - Mask_radius_y,
+      src = (src_Y * width + src_X) * channels + current_channel;
+      if (src_Y >= 0 && src_Y < height && src_X >= 0 && src_X < width)
+         N_ds[dest_Y][dest_X] = I[src];
       else
-         N_ds[destY][destX] = 0.0;
+         N_ds[dest_Y][dest_X] = 0.0;
 
-        for (int iter=1; iter <= (w_x * w_y) / (TILE_WIDTH*TILE_WIDTH); iter++)
+        for (int iter=1; iter <= (B_x * B_y) / (TILE_WIDTH*TILE_WIDTH); iter++)
         {
-          // Second batch loading
-          dest = threadIdx.y * TILE_WIDTH + threadIdx.x + iter*(TILE_WIDTH * TILE_WIDTH);
-            destY = dest / w_x, destX = dest % w_x;
-            srcY  = blockIdx.y * TILE_WIDTH + destY - Mask_radius_x;
-            srcX = blockIdx.x * TILE_WIDTH + destX - Mask_radius_y;
-            src = (srcY * width + srcX) * channels + k;
-            if (destY < w_y && destX < w_x)
+           // Second batch loading
+           dest = threadIdx.y * TILE_WIDTH + threadIdx.x + iter*(TILE_WIDTH * TILE_WIDTH);
+            dest_Y = dest / B_x, dest_X = dest % B_x;
+            src_Y  = blockIdx.y * TILE_WIDTH + dest_Y - Mask_radius_x;
+            src_X = blockIdx.x * TILE_WIDTH + dest_X - Mask_radius_y;
+            src = (src_Y * width + src_X) * channels + current_channel;
+            if (dest_Y < B_y && dest_X < B_x)
             {
-                if (srcY >= 0 && srcY < height && srcX >= 0 && srcX < width)
-                    N_ds[destY][destX] = I[src];
+                if (src_Y >= 0 && src_Y < height && src_X >= 0 && src_X < width)
+                    N_ds[dest_Y][dest_X] = I[src];
                 else
-                    N_ds[destY][destX] = 0.0;
+                    N_ds[dest_Y][dest_X] = 0.0;
             }
         }
       __syncthreads();
-     //printf("matrix %0.2f",accum);
+
       int y, x,z;
       for(z =0;z<outputChannels;z++)
         for (y = 0; y < Mask_width; y++)
            for (x = 0; x < Mask_width; x++)
-              //                                                                                            navigation with input channel mask  inside mask navigate
-              accum[z] += N_ds[threadIdx.y + y][threadIdx.x + x] * M[ ( z*Mask_width*Mask_width*channels + k*Mask_width*Mask_width) + y * Mask_width + x];
+              //                                                                                        navigation with input channel mask  inside mask navigate
+              accum[z] += N_ds[threadIdx.y + y][threadIdx.x + x] * M[ ( z*Mask_width*Mask_width*channels + current_channel*Mask_width*Mask_width) + y * Mask_width + x];
 
       __syncthreads();
    }
-
-   ///if(blockIdx.x ==0 && blockIdx.y==0 && threadIdx.x ==0 && threadIdx.y == 0)
-   //{
-     //printf("value at 0,0 %0.2f",accum);
-   //}
 
    int y, x,z;
    y = blockIdx.y * TILE_WIDTH + threadIdx.y;
    x = blockIdx.x * TILE_WIDTH + threadIdx.x;
    if (y < height && x < width)
-      //P[(y * width + x) * channels + k] = clamp(accum);
+   // add bias and relu
       for(z =0;z<outputChannels;z++)
           P[(y * width*outputChannels + outputChannels*x)+z] = clamp(accum[z]  + b[z]);
-        //  free(accum);
-
 }
 
 float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int j,int imageChannels ,int outputChannels);
@@ -2610,7 +2538,6 @@ float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int 
  int N_start_point_j = j  - (Mask_height/2);
  for(int j = 0; j<imageChannels; j++)
  {
-   // src = (srcY * width + srcX) * channels + k;
 
        for(int k=0;k<Mask_width;k++)
        {
@@ -2630,4 +2557,3 @@ float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int 
 }
 
 /***/
-
