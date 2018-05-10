@@ -143,8 +143,8 @@ void normalizeBGR(float *hostInputImageData)
 	FILE *results = fopen("results.txt", "w");
 	for(int i=0;i<SIZE*SIZE*INPUT_CHANNELS;i++) {
 				if(i % (SIZE*INPUT_CHANNELS) == 0 && i != 0)
-		//			fprintf(results, "\n");
-		//		fprintf(results, "%.5f\t",hostInputImageData[i]);
+					fprintf(results, "\n");
+				fprintf(results, "%.5f\t",hostInputImageData[i]);
 			}
 
 	fclose(input);
@@ -1736,7 +1736,7 @@ cudaDeviceSynchronize();
 
  }
  fclose(out4_3);
- srand(time(NULL));
+
  // Free conv_2_1 Memory
 free(hostMaskData);
  cudaFree(deviceMaskData);
@@ -2314,7 +2314,6 @@ free(hostOutputImageData);
         exit(EXIT_FAILURE);
     }
    // Copy device mask
-    int o =765;
     err = cudaMemcpy(deviceMaskData,
                dense_2,
                output*input*sizeof(float),
@@ -2500,10 +2499,8 @@ free(hostOutputImageData);
       j =i;
     }
 //    fprintf(soft, "%0.5f \t", *(hostOutputImageData+i));
-
-
   }
-  fprintf(soft, "class:%d \n", o,j);
+  fprintf(soft, "class:%d at:%d \n", max,j);
   fclose(soft);
 
 
