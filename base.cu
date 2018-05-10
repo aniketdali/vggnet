@@ -29,10 +29,11 @@
 typedef enum
 {
   CONV_1 = 512,
-  CONV_2 = 2,
-  CONV_3 = 3,
+
 }ch;
 const int out = ch(CONV_1);
+
+// Dense layer weights and bias
 float *dense_1 = (float*)(malloc(dense[0][0]*dense[0][1] * sizeof(float)));
 float *dense_2 = (float*)(malloc(dense[1][0]*dense[1][1] * sizeof(float)));
 float *dense_3 = (float*)(malloc(dense[2][0]*dense[2][1] * sizeof(float)));
@@ -61,7 +62,7 @@ void softmax(float *out, int sh_out) {
 	}
 }
 
-//@@ INSERT CODE HERE
+// Fully connected layer definition
 __global__ void fully_connected(float *I, const float* __restrict__ M, float *P,int channels, int width, int height,int outputChannels)
 {
    __shared__ float F_ds[7][7];
@@ -91,13 +92,13 @@ __global__ void fully_connected(float *I, const float* __restrict__ M, float *P,
                      //printf("%.2f \t %.2f \t",F_ds[i][j],M[i*TILE_WIDTH + TILE_WIDTH*TILE_WIDTH*z+ outputChannels*k*TILE_WIDTH*TILE_WIDTH+ j]);
 
                     acc[z] += F_ds[i][j] * M[i*TILE_WIDTH + TILE_WIDTH*TILE_WIDTH*z+ outputChannels*k*TILE_WIDTH*TILE_WIDTH+ j];
-                    //acc[z] += F_ds[i][j] *M[j*outputChannels+outputChannels+(i*7)*outputChannels + k * 7 * 7 * outputChannels];
+                    
 
                 }
 
               //  printf("\n");
               }
-            //  printf("done for z:%d and k:%d\n",z,k);
+            
           }
 
 
@@ -118,6 +119,8 @@ __global__ void fully_connected(float *I, const float* __restrict__ M, float *P,
 
 
 }
+
+// Normalise the BGR weights
 void normalizeBGR(float *hostInputImageData)
 {
     float coef[3] = { 103.939, 116.779, 123.68 };
@@ -153,8 +156,7 @@ void normalizeBGR(float *hostInputImageData)
 static unsigned int pos = 0;
 FILE *weight = fopen("weights.txt", "r");
 
-// Read the weights from weights.txt file and store in memory
-// Read the weights from weights.txt file and store in memory
+// Read the weights from weights.txt file and store 
 void readWeights(int level,float *wconv, float *bias){
 	float dval;
 	//int i, j, k, l, z;
@@ -204,14 +206,9 @@ void readWeights(int level,float *wconv, float *bias){
 	}
 
 	FILE *bias1 = fopen("bias.txt", "w");
-	// for (int i = 0; i < layers[level][0]; i++) {
-	// 	fscanf(weight, "%f", &dval);
-	// 	bias[i] = dval;
-	// 	fprintf(bias1, "%.5f\t",bias[i]);
-	// }
 
   int i =0;
-  while(i<layers[level][0])// && fscanf(weight, "%f", &dval) != EOF)
+  while(i<layers[level][0])
   {
   	fscanf(weight, "%f", &dval);
     bias[i] = dval;
@@ -259,34 +256,12 @@ void readWeights(int level,float *wconv, float *bias){
   }
   //pos = ftell(weight);
 
-  fclose(weight);
+    fclose(weight);
 	fclose(bias1);
 	fclose(conv);
 }
-void dense_weights(int level,float *wconv, float *bias)
-{
-  printf("Read justn");
-  fseek(weight,pos,0);
-  int z =level;
-  float dval;
-  // Reading dense weights
-	//for (z = 0; z < 3; z++) {
-		printf("Read dense block %d weights\n", z);
-		for (int i = 0; i < dense[z][0]*dense[z][1]; i++) {
-				fscanf(weight, "%f", &dval);
-				*(wconv+i) = dval;
-			}
-	//	}
-		for (int i = 0; i < dense[z][1]; i++) {
-			fscanf(weight, "%f", &dval);
-			*(bias+i) = dval;
-		}
-	//}
-  pos = ftell(weight);
-  fclose(weight);
 
-}
-
+// Maxpool layer definition
 __global__ void maxpool(float *image, float * output,int number_of_channels, int image_height, int image_width,int blockwidth )
 {
 
@@ -306,7 +281,7 @@ __global__ void maxpool(float *image, float * output,int number_of_channels, int
     }
   }
 }
-//@@ INSERT CODE HERE
+// Fully connected layer
 __global__ void fully1(float *I, const float* __restrict__ M, float *P,int channels,int outputChannels,float *b)
 {
    __shared__ float F_ds[7][7];
@@ -423,7 +398,7 @@ __global__ void fully3(float *I, const float* __restrict__ M, float *P,int chann
       }
 }
 
-// in first go, all of the threads will load the image pixels TILE_WIDTH * TILE_WIDTH on the second go first (TILE_WIDTH-mask radius)^2 threads will load the image.
+// In first go, all of the threads will load the image pixels TILE_WIDTH * TILE_WIDTH on the second go first (TILE_WIDTH-mask radius)^2 threads will load the image.
 __global__ void convolution(float *I, const float* __restrict__ M, float *P, float *b,int channels, int width, int height,int outputChannels)
 {
    __shared__ float N_ds[B_y][B_x];
