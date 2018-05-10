@@ -44,21 +44,21 @@ float *bias_3 = (float*)(malloc(dense[2][1] * sizeof(float)));
 
 // Function to convert input image(.txt) to normalized BGR format
 
-void softmax(float *out, int sh_out) {
+void softmax(float *prediction, int classes) {
 	int i;
 	float max_val, sum;
-	max_val = out[0];
-	for (i = 1; i < sh_out; i++) {
-		if (out[i] > max_val)
-			max_val = out[i];
+	max_val = prediction[0];
+	for (i = 1; i < classes; i++) {
+		if (prediction[i] > max_val)
+			max_val = prediction[i];
 	}
 	sum = 0.0;
-	for (i = 0; i < sh_out; i++) {
-		out[i] = exp(out[i] - max_val);
-		sum += out[i];
+	for (i = 0; i < classes; i++) {
+		prediction[i] = exp(prediction[i] - max_val);
+		sum += prediction[i];
 	}
-	for (i = 0; i < sh_out; i++) {
-		out[i] /= sum;
+	for (i = 0; i < classes; i++) {
+		prediction[i] /= sum;
 	}
 }
 
@@ -2493,7 +2493,7 @@ free(hostOutputImageData);
   free(bias_2);
   free(bias_3);
 
-/*****************************cdense1_3 end************************************************/
+/*****************************dense1_3 end************************************************/
 
 
 
@@ -2503,29 +2503,3 @@ free(hostOutputImageData);
   return 0;
 }
 
-float convolution_2D_OnHost(float * N,float * M,int width, int height,int i,int j,int imageChannels, int outputChannels)
-{
- float Pvalue=0.0;
- int N_start_point_i = i  - (Mask_width/2);
- int N_start_point_j = j  - (Mask_height/2);
- for(int j = 0; j<imageChannels; j++)
- {
-
-       for(int k=0;k<Mask_width;k++)
-       {
-          for(int l=0;l<Mask_height;l++)
-          {
-             if(((N_start_point_i+k)>=0) && ((N_start_point_i+k)<width)&&((N_start_point_j+l)>=0)&&((N_start_point_j+l)<height))
-             {
-                 Pvalue +=N[((N_start_point_i+k)*width+(N_start_point_j+l))*imageChannels + j] *M[ (outputChannels*Mask_width*Mask_width*imageChannels) + (j*Mask_width*Mask_width) + (k*Mask_width)+l];
-             }
-         }
-       }
-
-}
-// return(clamp(Pvalue));
-
- return((Pvalue));
-}
-
-/***/
